@@ -1,0 +1,1000 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Cohort Watch Prototype</title>
+<!--
+  SupportLogic · Cohort Watch — clickable concept prototype.
+  Self-contained: no network requests, no external libraries.
+  ALL DATA IS ILLUSTRATIVE. Visual design approximated from two Console screenshots.
+-->
+<style>
+  :root {
+    /* Approximated from screenshots (not the design system) */
+    --ink: #1d2433;
+    --ink-2: #4a5568;
+    --muted: #7a8599;
+    --tab-muted: #7d8ca3;
+    --line: #e5e9f0;
+    --line-2: #d6dce6;
+    --page: #f5f8fb;
+    --card: #ffffff;
+    --pill: #cfe5ee;
+    --teal: #1e4b5a;
+    --teal-2: #2f6c80;
+    --link: #1f6fbf;
+    --rose: #e23d6d;
+    --salmon: #e8696b;
+    --orange: #e9a23b;
+    --green: #2f8f5b;
+    --warn-bg: #fdf4d3;
+    --warn-line: #f0d98c;
+    --violet: #6b5bd6;
+    --violet-bg: #efedfc;
+    --shadow: 0 1px 2px rgba(16, 24, 40, .06), 0 1px 3px rgba(16, 24, 40, .08);
+    --radius: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { background: var(--page); font-size: 14px; line-height: 1.45; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  a, .link { color: var(--link); text-decoration: none; cursor: pointer; }
+  a:hover, .link:hover { text-decoration: underline; }
+  :focus-visible { outline: 2px solid var(--teal-2); outline-offset: 2px; }
+
+  /* Prototype strip */
+  .proto-strip {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 60; height: 24px;
+    background: var(--violet); color: #fff; font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .proto-strip b { font-weight: 600; }
+
+  .app { display: grid; grid-template-columns: 248px 1fr; height: 100vh; padding-top: 24px; }
+
+  /* Sidebar */
+  .sidebar {
+    background: linear-gradient(180deg, #f1f7fc 0%, #eef1fb 60%, #f3eefb 100%);
+    border-right: 1px solid var(--line); display: flex; flex-direction: column; position: relative; min-height: 0;
+  }
+  .logo { font-size: 24px; letter-spacing: -.3px; padding: 22px 20px 18px; font-weight: 500; }
+  .logo b { font-weight: 700; }
+  .collapse {
+    position: absolute; right: -14px; top: 12px; width: 28px; height: 28px; border-radius: 50%;
+    border: 1px solid var(--line-2); background: #fff; display: grid; place-items: center; font-size: 12px; color: var(--ink-2);
+  }
+  .nav { list-style: none; margin: 0; padding: 0 10px; overflow: auto; flex: 1; }
+  .nav button {
+    width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 12px; margin: 2px 0;
+    border: 1px solid transparent; border-radius: 10px; background: transparent; font-size: 16px; text-align: left;
+  }
+  .nav button:hover { background: rgba(255,255,255,.6); }
+  .nav button.active { background: #fff; border-color: var(--line); box-shadow: var(--shadow); }
+  .nav svg { width: 20px; height: 20px; flex: none; stroke: var(--ink); fill: none; stroke-width: 1.6; }
+  .badge-new { background: var(--rose); color: #fff; font-size: 10px; font-weight: 700; border-radius: 10px; padding: 1px 6px; }
+  .user { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-top: 1px solid var(--line); font-size: 15px; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--teal-2); display: grid; place-items: center; font-size: 12px; color: var(--teal-2); }
+
+  /* Main */
+  main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 28px; background: #fff; }
+  .topbar h1 { font-size: 20px; font-weight: 600; margin: 0; }
+  .topbar .icons { display: flex; gap: 14px; color: var(--ink-2); }
+  .topbar .icons svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+  .sync {
+    background: var(--warn-bg); border-top: 1px solid var(--warn-line); border-bottom: 1px solid var(--warn-line);
+    font-size: 13px; text-align: center; padding: 6px 40px; position: relative; color: var(--ink-2);
+  }
+  .sync button { position: absolute; right: 12px; top: 3px; border: 0; background: none; font-size: 16px; }
+  .scroll { overflow: auto; flex: 1; padding: 20px 28px 80px; }
+  .tabs { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+  .tab { border: 0; background: none; font-size: 22px; font-weight: 600; color: var(--tab-muted); padding: 6px 18px; border-radius: 22px; }
+  .tab.active { background: var(--pill); color: var(--ink); }
+  .tab .chip-proposed { font-size: 10px; vertical-align: middle; margin-left: 6px; }
+  .subtitle { color: var(--muted); margin: 4px 0 16px; }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); }
+  .chip { display: inline-flex; align-items: center; gap: 4px; border-radius: 6px; padding: 2px 8px; font-size: 12px; border: 1px solid var(--line-2); color: var(--ink-2); background: #fff; white-space: nowrap; }
+  .chip-proposed { background: var(--violet-bg); color: var(--violet); border-color: #d9d4fa; font-weight: 600; letter-spacing: .2px; }
+  .chip-red { color: var(--rose); border-color: #f2a7bd; }
+  .chip-green { color: var(--green); border-color: #a8d8bd; }
+  .chip-orange { color: #a96a0c; border-color: #f2cf93; background: #fff8ec; }
+  .chip-grey { background: #f2f4f7; }
+  .btn { border: 1px solid var(--line-2); background: #fff; border-radius: 8px; padding: 7px 12px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+  .btn:hover { border-color: var(--teal-2); }
+  .btn-primary { background: var(--teal); color: #fff; border-color: var(--teal); }
+  .btn-primary:hover { background: var(--teal-2); }
+  .btn-ghost { border-color: transparent; background: none; color: var(--link); padding: 4px 6px; }
+  .icon-btn { border: 0; background: none; padding: 4px; color: var(--ink-2); }
+  .icon-btn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+
+  /* Overview replica */
+  .ov-wrap { padding: 20px; }
+  .ov-tools { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 16px; }
+  .select { border: 1px solid var(--line-2); border-radius: 6px; padding: 8px 12px; background: #fff; font-size: 14px; }
+  .ov-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+  .ov-card { padding: 16px 18px; min-height: 180px; display: flex; flex-direction: column; }
+  .ov-card.selected { border: 2.5px solid var(--teal); }
+  .ov-card .t { font-size: 17px; font-weight: 600; }
+  .ov-card .n { font-size: 40px; font-weight: 800; color: var(--rose); line-height: 1; text-align: right; }
+  .ov-card .u { color: var(--rose); text-align: right; font-size: 15px; }
+  .ov-card .foot { margin-top: auto; font-size: 14px; color: var(--rose); }
+  .ov-card svg { width: 100%; height: 50px; }
+  .ov-watch { margin-top: 16px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; justify-content: space-between; border-style: dashed; border-color: #cbc4f6; background: #fbfaff; }
+
+  /* Summary replica */
+  .sum { padding: 22px 30px; }
+  .sum-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .sum-head h2 { margin: 0; font-size: 22px; }
+  .outdated { color: var(--orange); font-size: 13px; display: inline-flex; gap: 4px; align-items: center; }
+  .sum h4 { margin: 16px 0 6px; font-size: 15px; }
+  .sum ul { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 15px; }
+  .sum li { margin: 6px 0; }
+  .watch-callout { margin: 18px 0 0; padding: 12px 14px; border-radius: 10px; background: var(--violet-bg); display: flex; align-items: center; gap: 12px; justify-content: space-between; flex-wrap: wrap; }
+
+  /* Cohort Watch */
+  .cw { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 16px; align-items: start; }
+  .cw-list { padding: 12px; }
+  .cw-list h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin: 4px 6px 10px; }
+  .cw-item { width: 100%; text-align: left; border: 1px solid transparent; background: none; border-radius: 10px; padding: 10px 10px; margin-bottom: 4px; display: block; }
+  .cw-item:hover { background: #f4f7fa; }
+  .cw-item.active { background: #eef6f9; border-color: #bcdbe6; }
+  .cw-item .nm { font-weight: 600; font-size: 14px; }
+  .cw-item .meta { font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; margin-top: 3px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--rose); display: inline-block; }
+  .dot.quiet { background: var(--line-2); }
+  .cw-add { width: 100%; margin-top: 8px; justify-content: center; }
+
+  .cw-head { padding: 18px 20px 14px; }
+  .cw-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .cw-title h2 { margin: 0; font-size: 20px; }
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0 0; }
+  .cw-tools { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+  .status-line { font-size: 12px; color: var(--muted); margin-top: 8px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .pulse { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px rgba(47,143,91,.18); }
+
+  .kpis { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; padding: 0 20px 16px; }
+  .kpi { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: #fff; }
+  .kpi .l { font-size: 12px; color: var(--muted); }
+  .kpi .v { font-size: 24px; font-weight: 700; margin-top: 2px; }
+  .kpi .d { font-size: 12px; margin-top: 2px; }
+  .up-bad { color: var(--rose); } .down-good { color: var(--green); } .flat { color: var(--muted); }
+
+  .section-title { display: flex; align-items: center; justify-content: space-between; margin: 18px 0 10px; gap: 10px; flex-wrap: wrap; }
+  .section-title h3 { margin: 0; font-size: 16px; }
+  .ins-list { display: grid; gap: 12px; }
+  .ins { padding: 14px 16px; display: grid; grid-template-columns: minmax(0, 1fr) 190px; gap: 14px; cursor: pointer; transition: border-color .15s, box-shadow .15s; text-align: left; width: 100%; }
+  .ins:hover { border-color: #a9cfdc; box-shadow: var(--shadow); }
+  .ins.active { border: 2px solid var(--teal); padding: 13px 15px; }
+  .ins .kind { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+  .ins h4 { margin: 0 0 4px; font-size: 15px; }
+  .ins p { margin: 0; color: var(--ink-2); font-size: 13.5px; }
+  .ins .mets { display: flex; gap: 14px; margin-top: 8px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-2); }
+  .ins .mets b { color: var(--ink); }
+  .ins .spark { align-self: center; }
+  .ins .spark svg { width: 100%; height: 54px; }
+  .ins .spark .cap { font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; }
+  .sev-high { color: var(--rose); border-color: #f2a7bd; }
+  .sev-med { color: #a96a0c; border-color: #f2cf93; background: #fff8ec; }
+  .sev-pos { color: var(--green); border-color: #a8d8bd; }
+  .empty { padding: 30px; text-align: center; color: var(--muted); }
+
+  .trend-card { padding: 14px 16px; margin-top: 4px; }
+  .trend-card svg { width: 100%; height: 150px; display: block; }
+  .legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); }
+  .legend i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 4px; }
+  .tooltip { position: fixed; pointer-events: none; background: var(--ink); color: #fff; font-size: 12px; padding: 5px 8px; border-radius: 6px; z-index: 90; display: none; }
+
+  /* Drawer */
+  .scrim { position: fixed; inset: 24px 0 0 0; background: rgba(16, 24, 40, .25); z-index: 40; display: none; }
+  .drawer {
+    position: fixed; top: 24px; right: 0; bottom: 0; width: min(720px, 100vw); background: #fff; z-index: 50;
+    box-shadow: -8px 0 24px rgba(16,24,40,.12); transform: translateX(100%); transition: transform .22s ease; display: flex; flex-direction: column;
+  }
+  .drawer.open { transform: none; }
+  .drawer-head { padding: 16px 20px 0; border-bottom: 1px solid var(--line); }
+  .drawer-head .row { display: flex; align-items: flex-start; gap: 10px; }
+  .drawer-head h3 { margin: 4px 0 6px; font-size: 18px; flex: 1; }
+  .dtabs { display: flex; gap: 4px; margin-top: 10px; }
+  .dtab { border: 0; background: none; padding: 8px 12px; font-weight: 600; color: var(--tab-muted); border-bottom: 2.5px solid transparent; }
+  .dtab.active { color: var(--ink); border-bottom-color: var(--teal); }
+  .drawer-body { overflow: auto; flex: 1; padding: 16px 20px; }
+  .drawer-foot { border-top: 1px solid var(--line); padding: 12px 20px 16px; background: #fbfcfd; }
+  .drawer-foot h5 { margin: 0 0 8px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; display: flex; justify-content: space-between; align-items: center; }
+  .actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .action { border: 1px solid var(--line-2); background: #fff; border-radius: 10px; padding: 10px 12px; text-align: left; display: flex; gap: 10px; align-items: flex-start; }
+  .action:hover { border-color: var(--teal-2); box-shadow: var(--shadow); }
+  .action svg { width: 20px; height: 20px; stroke: var(--teal); fill: none; stroke-width: 1.7; flex: none; margin-top: 2px; }
+  .action .at { font-weight: 600; font-size: 13.5px; }
+  .action .ad { font-size: 12px; color: var(--muted); }
+  .action .avail { font-size: 11px; color: var(--violet); margin-top: 3px; display: inline-flex; gap: 4px; align-items: center; }
+  .action.locked svg { stroke: var(--violet); }
+  .fb { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--muted); margin-top: 12px; flex-wrap: wrap; }
+  .fb button { border: 1px solid var(--line-2); background: #fff; border-radius: 6px; padding: 3px 8px; }
+  .fb button.on { background: var(--pill); border-color: var(--teal-2); }
+
+  table.cases { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.cases th { text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; padding: 8px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  table.cases td { padding: 9px 6px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.cases tr.case-row { cursor: pointer; }
+  table.cases tr.case-row:hover td { background: #f7fafc; }
+  table.cases tr.detail td { background: #f7fafc; color: var(--ink-2); font-size: 12.5px; }
+  .ring { width: 30px; height: 30px; border-radius: 50%; border: 2.5px solid var(--green); display: grid; place-items: center; font-size: 11px; font-weight: 600; color: var(--green); }
+  .ring.hi { border-color: var(--rose); color: var(--rose); }
+  .sla-bad { color: var(--rose); }
+  .selbar { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: var(--muted); margin-bottom: 8px; gap: 8px; flex-wrap: wrap; }
+  .quote { border-left: 3px solid var(--salmon); padding: 6px 12px; margin: 0 0 14px; background: #fff9f9; border-radius: 0 8px 8px 0; }
+  .quote .q { font-size: 14px; }
+  .quote .src { font-size: 12px; color: var(--muted); margin-top: 4px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .why li { margin: 6px 0; color: var(--ink-2); }
+  .note { font-size: 12px; color: var(--muted); background: #f6f7f9; border-radius: 8px; padding: 8px 10px; margin-top: 12px; }
+
+  /* Modal */
+  .modal-wrap { position: fixed; inset: 24px 0 0 0; background: rgba(16,24,40,.35); z-index: 70; display: none; align-items: center; justify-content: center; padding: 16px; }
+  .modal-wrap.open { display: flex; }
+  .modal { background: #fff; border-radius: 14px; width: min(620px, 100%); max-height: calc(100vh - 80px); display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(16,24,40,.2); }
+  .modal header { padding: 16px 20px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .modal header h3 { margin: 0; font-size: 17px; }
+  .modal .mb { padding: 16px 20px; overflow: auto; }
+  .modal footer { padding: 12px 20px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .field input, .field select, .field textarea { width: 100%; border: 1px solid var(--line-2); border-radius: 8px; padding: 8px 10px; font: inherit; }
+  .field textarea { min-height: 220px; font-size: 13px; line-height: 1.5; }
+  .cond { display: grid; grid-template-columns: 1.4fr 1fr .8fr; gap: 6px; margin-bottom: 6px; }
+  .cond div { border: 1px solid var(--line-2); border-radius: 8px; padding: 6px 8px; font-size: 13px; background: #fafbfc; }
+  .and { font-size: 11px; color: var(--muted); margin: 2px 0 6px; font-weight: 600; }
+  .preview-bars .bar { display: grid; grid-template-columns: 170px 1fr 30px; gap: 8px; align-items: center; margin: 6px 0; font-size: 13px; }
+  .preview-bars .track { height: 10px; border-radius: 6px; background: #eef1f5; overflow: hidden; }
+  .preview-bars .fill { height: 100%; background: var(--violet); opacity: .75; }
+  .upsell-box { background: var(--violet-bg); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; font-size: 13.5px; }
+
+  /* Toast */
+  .toasts { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); z-index: 95; display: grid; gap: 8px; }
+  .toast { background: var(--ink); color: #fff; border-radius: 10px; padding: 10px 14px; font-size: 13px; display: flex; gap: 12px; align-items: center; box-shadow: 0 8px 20px rgba(0,0,0,.2); }
+  .toast button { background: none; border: 0; color: #9fd3e6; font-weight: 600; }
+  .help { position: fixed; right: 24px; bottom: 22px; background: #1f2430; color: #fff; border-radius: 22px; padding: 9px 16px; font-weight: 600; border: 0; z-index: 30; }
+
+  .alerts-mini { margin-top: 14px; }
+  .alerts-mini table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .alerts-mini td, .alerts-mini th { padding: 6px; border-bottom: 1px solid var(--line); text-align: left; }
+
+  @media (max-width: 1100px) {
+    .ov-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .cw { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 760px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .scroll { padding: 16px; }
+    .ins { grid-template-columns: 1fr; }
+    .actions { grid-template-columns: 1fr; }
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+</style>
+</head>
+<body>
+
+<div class="proto-strip" role="note"><b>Prototype</b> · Cohort Watch concept (proposal) · All data is illustrative · Not a shipped feature</div>
+
+<div class="app">
+  <aside class="sidebar" aria-label="Main navigation">
+    <div class="logo">Support<b>Logic</b></div>
+    <button class="collapse" title="Collapse (mocked)" data-mock="Collapse sidebar">&laquo;</button>
+    <ul class="nav" id="nav"></ul>
+    <div class="user"><span class="avatar">UU</span> Usha</div>
+  </aside>
+
+  <main>
+    <div class="topbar">
+      <h1>Sfdc-Sandbox</h1>
+      <div class="icons">
+        <button class="icon-btn" data-mock="Global search" title="Search (mocked)"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></button>
+        <button class="icon-btn" data-mock="Language" title="Language (mocked)"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/></svg></button>
+      </div>
+    </div>
+    <div class="sync" id="sync">
+      Data last synced <b>14 hours 6 min ago</b> (Oct 25, 2:08 AM), data shown here may be out of date.
+      <button aria-label="Dismiss sync banner" onclick="document.getElementById('sync').remove()">&times;</button>
+    </div>
+
+    <div class="scroll" id="scroll">
+      <div class="tabs" role="tablist">
+        <button class="tab" data-tab="overview" role="tab">Overview</button>
+        <button class="tab" data-tab="summary" role="tab">Summary</button>
+        <button class="tab" data-tab="watch" role="tab">Cohort Watch <span class="chip chip-proposed">PROPOSED</span></button>
+        <button class="tab" data-tab="team" role="tab">Team</button>
+      </div>
+      <div id="view"></div>
+    </div>
+  </main>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-label="Insight evidence" aria-hidden="true"></aside>
+<div class="modal-wrap" id="modal" role="dialog" aria-modal="true"><div class="modal" id="modalBox"></div></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div class="tooltip" id="tip"></div>
+<button class="help" data-mock="Help">? Help</button>
+
+<script>
+/* =========================================================================
+   ILLUSTRATIVE DATA — every account, person, case, quote and number below
+   is made up for the prototype. The first cohort echoes the Sfdc-Sandbox
+   Summary screenshot's counts (173 open / 72 escalated) for continuity only.
+   ========================================================================= */
+
+const NAV = [
+  ['Console', 'M4 4h6v7H4zM14 4h6v4h-6zM14 12h6v8h-6zM4 15h6v5H4z'],
+  ['Workspace', 'M4 5h16v14H4zM4 9h16'],
+  ['Backlog', 'M9 6h11M9 12h11M9 18h11M4 6h1M4 12h1M4 18h1'],
+  ['Sentiments', 'M12 4v16M8 8v8M16 8v8M4 11v2M20 11v2'],
+  ['Escalations', 'M6 3h12v18H6zM12 8v5M12 16v.5'],
+  ['Assignments', 'M9 8a3 3 0 1 0 0-.1M3 20c0-3 3-5 6-5s6 2 6 5M15 15l2 2 4-4'],
+  ['Quality', 'M12 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zM9 13l-2 8 5-3 5 3-2-8'],
+  ['Support Engineers', 'M4 12a8 8 0 0 1 16 0M4 12v3h3v-3zM17 12v3h3v-3z'],
+  ['Accounts', 'M6 3h12v18H6zM9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4'],
+  ['SLAs', 'M7 7a2 2 0 1 0 0-.1M5 20v-6h4v6M12 20v-9h4v9M17 20v-4h3v4', true],
+  ['Analytics', 'M12 3v9l7 5M12 3a9 9 0 1 0 9 9'],
+  ['Orchestrate', 'M3 12h5M8 9h5v6H8zM13 12h3M16 6h5v4h-5zM16 14h5v4h-5z'],
+  ['Settings', 'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2']
+];
+
+const CASES = {
+  '61902': { acct: 'Nordhavn Logistics', tier: 'Premium', pri: 'High', age: '3d', sla: 'First Response at risk · 82% elapsed', slaBad: true, lte: 86, sig: ['Frustration', 'Urgency'], owner: 'Priya Raman', last: 'Inbound · 2h ago', snip: '"Third node down since the firmware push. We need a rollback path today."' },
+  '61915': { acct: 'Nordhavn Logistics', tier: 'Premium', pri: 'High', age: '2d', sla: 'First Response at risk · 74% elapsed', slaBad: true, lte: 81, sig: ['Urgency'], owner: 'Priya Raman', last: 'Inbound · 5h ago', snip: '"Same panic signature as 61902 on a second cluster."' },
+  '61877': { acct: 'Helios Grid Energy', tier: 'Premium', pri: 'Critical', age: '5d', sla: 'Resolution at risk · 68% elapsed', slaBad: true, lte: 88, sig: ['Frustration', 'Escalation request'], owner: 'Marcus Webb', last: 'Inbound · 1h ago', snip: '"Kernel panic at boot after RAID controller update to 2.8-0. Production impact."' },
+  '61930': { acct: 'Helios Grid Energy', tier: 'Premium', pri: 'High', age: '1d', sla: 'Within SLA', slaBad: false, lte: 72, sig: ['Urgency'], owner: 'Marcus Webb', last: 'Outbound · 3h ago', snip: '"Can you confirm whether 2.7-4 is a safe downgrade?"' },
+  '61851': { acct: 'Ironwood Manufacturing', tier: 'Default', pri: 'High', age: '6d', sla: 'Resolution at risk · 71% elapsed', slaBad: true, lte: 79, sig: ['Frustration'], owner: 'Elena Sokolova', last: 'Inbound · 9h ago', snip: '"We have now lost two shifts of line data to these panics."' },
+  '61944': { acct: 'Ironwood Manufacturing', tier: 'Default', pri: 'Medium', age: '1d', sla: 'Within SLA', slaBad: false, lte: 64, sig: [], owner: 'Elena Sokolova', last: 'Inbound · 6h ago', snip: '"Seeing intermittent reboots on PE2650 hosts, logs attached."' },
+  '61868': { acct: 'Saltmarsh Telecom', tier: 'Default', pri: 'High', age: '4d', sla: 'First Response at risk · 90% elapsed', slaBad: true, lte: 83, sig: ['Urgency', 'Call request'], owner: 'Tomás Herrera', last: 'Inbound · 40m ago', snip: '"Please call us — this is blocking a customer cutover."' },
+  '61952': { acct: 'Saltmarsh Telecom', tier: 'Default', pri: 'Medium', age: '0d', sla: 'Within SLA', slaBad: false, lte: 58, sig: [], owner: 'Tomás Herrera', last: 'Inbound · 2h ago', snip: '"Opening a new case for the lab cluster, same symptoms."' },
+  '61839': { acct: 'Kestrel Aerospace', tier: 'Premium', pri: 'High', age: '7d', sla: 'Within SLA', slaBad: false, lte: 70, sig: ['Frustration'], owner: 'Aiko Tanaka', last: 'Outbound · 1d ago', snip: '"Engineering asked for a crash dump — uploaded yesterday."' },
+
+  '60211': { acct: 'Bluefin Media', tier: 'Default', pri: 'Critical', age: '31d', sla: 'Resolution missed', slaBad: true, lte: 91, sig: ['Frustration', 'Escalation request'], owner: 'Daniel Okafor', last: 'Inbound · 6d ago', snip: '"No update in almost a week. Is anyone looking at this?"' },
+  '60267': { acct: 'Orchard Pharma', tier: 'Premium', pri: 'Critical', age: '18d', sla: 'Resolution at risk · 88% elapsed', slaBad: true, lte: 87, sig: ['Urgency'], owner: 'Grace Liu', last: 'Inbound · 7d ago', snip: '"Installer still crashes on the validated image. Waiting on the fix ETA."' },
+  '60515': { acct: 'Quarry Bank Financial', tier: 'Premium', pri: 'High', age: '14d', sla: 'Follow-up at risk · 79% elapsed', slaBad: true, lte: 84, sig: ['Frustration'], owner: 'Sam Patel', last: 'Inbound · 8d ago', snip: '"Registration failures continue. Our auditors are asking for a root cause."' },
+  '60768': { acct: 'Tamarind Retail', tier: 'Default', pri: 'High', age: '12d', sla: 'Within SLA', slaBad: false, lte: 76, sig: ['Escalation request'], owner: 'Daniel Okafor', last: 'Inbound · 6d ago', snip: '"Requesting escalation to engineering leadership."' },
+  '61214': { acct: 'Brightwell Health', tier: 'Premium', pri: 'High', age: '9d', sla: 'Follow-up at risk · 81% elapsed', slaBad: true, lte: 82, sig: ['Escalation request', 'Urgency'], owner: 'Noah Fischer', last: 'Inbound · 5d ago', snip: '"This is now affecting clinical scheduling. Please escalate."' },
+  '60165': { acct: 'Kestrel Aerospace', tier: 'Premium', pri: 'Medium', age: '11d', sla: 'Within SLA', slaBad: false, lte: 61, sig: [], owner: 'Aiko Tanaka', last: 'Outbound · 6d ago', snip: '"Driver build is with engineering for review."' },
+  '61574': { acct: 'Ironwood Manufacturing', tier: 'Default', pri: 'Medium', age: '10d', sla: 'Within SLA', slaBad: false, lte: 57, sig: [], owner: 'Elena Sokolova', last: 'Inbound · 5d ago', snip: '"Any update on the graphics driver fix?"' },
+
+  '61455': { acct: 'Quarry Bank Financial', tier: 'Premium', pri: 'High', age: '6d', sla: 'Resolution missed', slaBad: true, lte: 85, sig: ['Urgency'], owner: 'Sam Patel', last: 'Inbound · 3h ago', snip: '"Performance degradation in production is unacceptable."' },
+  '61852': { acct: 'Brightwell Health', tier: 'Premium', pri: 'High', age: '5d', sla: 'First Response missed', slaBad: true, lte: 80, sig: ['Urgency'], owner: 'Sam Patel', last: 'Inbound · 4h ago', snip: '"Install delays are holding up our go-live."' },
+  '61620': { acct: 'Orchard Pharma', tier: 'Premium', pri: 'Medium', age: '4d', sla: 'Follow-up missed', slaBad: true, lte: 66, sig: [], owner: 'Sam Patel', last: 'Inbound · 1d ago', snip: '"Following up again on the question from Monday."' },
+  '61733': { acct: 'Tamarind Retail', tier: 'Default', pri: 'High', age: '3d', sla: 'Resolution missed', slaBad: true, lte: 77, sig: ['Frustration'], owner: 'Daniel Okafor', last: 'Inbound · 7h ago', snip: '"This is the third time we are asking."' },
+  '61789': { acct: 'Bluefin Media', tier: 'Default', pri: 'Medium', age: '3d', sla: 'Follow-up missed', slaBad: true, lte: 62, sig: [], owner: 'Daniel Okafor', last: 'Inbound · 10h ago', snip: '"Still waiting on the logs review."' },
+
+  '60890': { acct: 'Saltmarsh Telecom', tier: 'Default', pri: 'Medium', age: '8d', sla: 'Within SLA', slaBad: false, lte: 41, sig: [], owner: 'Tomás Herrera', last: 'Outbound · 4h ago', snip: '"The proxy charset fix resolved it on our side, thanks."' },
+  '60934': { acct: 'Tamarind Retail', tier: 'Default', pri: 'Low', age: '9d', sla: 'Within SLA', slaBad: false, lte: 35, sig: [], owner: 'Grace Liu', last: 'Outbound · 1d ago', snip: '"Confirmed working after the patch."' },
+  '61002': { acct: 'Bluefin Media', tier: 'Default', pri: 'Medium', age: '7d', sla: 'Within SLA', slaBad: false, lte: 44, sig: [], owner: 'Noah Fischer', last: 'Outbound · 2d ago', snip: '"Encoding issue no longer reproduces."' }
+};
+
+const INSIGHTS = {
+  kernel: {
+    kind: 'Emerging issue', sev: 'high', firstSeen: 'First seen Oct 19',
+    title: 'Kernel panics on Dell PE2650 after RAID firmware 2.8-0 are spreading',
+    summary: 'Cases matching this pattern rose from 3 to 9 in 7 days across 5 accounts. 3 of those accounts are on the Premium SLA tier, and 5 cases are close to an SLA breach.',
+    mets: [['Cases', '9', '+6 vs prior 7d'], ['Accounts', '5', '3 Premium'], ['SLA at risk', '5', ''], ['Avg LTE', '78', '']],
+    trend: [0, 0, 1, 0, 1, 0, 1, 1, 1, 2, 1, 3, 2, 3],
+    cases: ['61877', '61868', '61902', '61915', '61851', '61839', '61930', '61944', '61952'],
+    quotes: ['61877', '61902', '61851', '61868'],
+    why: [
+      'Matching cases in this cohort grew from 3 (Oct 11–17) to 9 (Oct 18–24).',
+      'Cases share the terms "kernel panic", "PE2650" and "RAID 2.8-0" in inbound comments (illustrative clustering).',
+      'The cases span 5 accounts. Before Oct 18, only 1 account was affected.',
+      '5 of 9 cases are past 65% of their SLA, using each account\'s tier and business hours (10.2 SLA tiers).',
+      'Frustration or urgency signals appear on 7 of 9 cases (10.2 smarter signal detection).'
+    ],
+    actions: ['alert', 'proactive', 'route', 'brief']
+  },
+  stall: {
+    kind: 'Stalled handoff', sev: 'high', firstSeen: 'Ongoing · worsened this week',
+    title: 'Escalations are waiting on engineering with no outbound update for 5+ days',
+    summary: '7 escalated cases have had no outbound comment for more than 5 days, up from 3 last week. The customers have followed up on 6 of them.',
+    mets: [['Cases', '7', '+4 vs prior 7d'], ['Longest wait', '31d', 'case 60211'], ['Premium', '4', ''], ['Escalation requests', '3', '']],
+    trend: [2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 5, 6, 6, 7],
+    cases: ['60211', '60267', '60515', '61214', '60768', '60165', '61574'],
+    quotes: ['60211', '60515', '61214'],
+    why: [
+      'All 7 cases are escalated and linked to an engineering issue.',
+      'The last outbound comment on each was over 5 days ago. Customer Wait Time keeps rising (10.2 alert conditions).',
+      'Customers followed up on 6 of 7 cases in that window.',
+      'No alert covering this condition exists in the Alerts Library (illustrative check).'
+    ],
+    actions: ['alert', 'brief', 'proactive', 'route']
+  },
+  sla: {
+    kind: 'SLA concentration', sev: 'med', firstSeen: 'This week',
+    title: 'SLA breaches are concentrated on 2 support engineers',
+    summary: '5 of the 7 SLA breaches in this cohort this week sit with Sam Patel and Daniel Okafor. Both are carrying above-average open escalations.',
+    mets: [['Breaches', '7', '+3 vs prior 7d'], ['On 2 engineers', '5 of 7', ''], ['Premium', '3', ''], ['Breach type', 'Mixed', 'FR, FU, Res']],
+    trend: [0, 1, 0, 1, 1, 0, 1, 1, 2, 1, 2, 2, 3, 3],
+    cases: ['61455', '61852', '61620', '61733', '61789'],
+    quotes: ['61455', '61733'],
+    why: [
+      'Breaches were attributed to the case owner at the time of breach (builds on planned agent-at-breach attribution).',
+      'Sam Patel owns 3 breached cases and Daniel Okafor owns 2. The team median is under 1 (illustrative).',
+      'Both engineers own more open escalations than the cohort average this week.'
+    ],
+    actions: ['route', 'brief', 'alert', 'proactive']
+  },
+  proxy: {
+    kind: 'Improving', sev: 'pos', firstSeen: 'This week',
+    title: 'Negative sentiment on proxy and charset issues is down after the patch',
+    summary: 'Negative-sentiment cases tied to proxy and charset handling fell from 8 to 3 week over week. Customers are confirming the fix on several cases.',
+    mets: [['Neg. sentiment', '3', '−5 vs prior 7d'], ['Confirmed fixed', '3', ''], ['Accounts', '3', '']],
+    trend: [6, 7, 8, 8, 7, 8, 8, 7, 6, 5, 4, 4, 3, 3],
+    cases: ['60890', '60934', '61002'],
+    quotes: ['60890', '60934'],
+    why: [
+      'Negative sentiment on cases mentioning "proxy" or "charset" dropped 63% week over week.',
+      'Outbound replies confirming a patch preceded the drop on 3 cases.'
+    ],
+    actions: ['brief']
+  },
+  premKernel: {
+    kind: 'Emerging issue', sev: 'high', firstSeen: 'First seen Oct 19',
+    title: 'Premium accounts are hit by the PE2650 kernel-panic pattern',
+    summary: '3 Premium accounts have 5 open cases matching the pattern, and 3 of those cases are close to a First Response or Resolution breach.',
+    mets: [['Cases', '5', '+4 vs prior 7d'], ['Accounts', '3', 'all Premium'], ['SLA at risk', '3', '']],
+    trend: [0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 2, 1, 2],
+    cases: ['61877', '61902', '61915', '61930', '61839'],
+    quotes: ['61877', '61902'],
+    why: ['This is the same pattern as in the Engineering-linked escalations cohort, limited to accounts on the Premium SLA tier.'],
+    actions: ['proactive', 'alert', 'route', 'brief']
+  },
+  premFollow: {
+    kind: 'SLA concentration', sev: 'med', firstSeen: 'This week',
+    title: 'Follow-up Response is the most-missed Premium SLA this week',
+    summary: '2 of 3 Premium breaches this week were Follow-up Response, which is tracked separately from First Response since 10.2.',
+    mets: [['Follow-up misses', '2', '+2 vs prior 7d'], ['Accounts', '2', '']],
+    trend: [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0],
+    cases: ['61620', '60515'],
+    quotes: ['61620'],
+    why: ['10.2 made Follow-up Response Time its own field selection, so these misses no longer hide inside First Response.'],
+    actions: ['alert', 'proactive', 'brief']
+  },
+  apac: {
+    kind: 'Stalled handoff', sev: 'med', firstSeen: 'This week',
+    title: 'Overnight handoffs to APAC Storage leave cases waiting on the agent',
+    summary: '4 cases waited more than 10 business hours for an agent reply after an EMEA-to-APAC handoff.',
+    mets: [['Cases', '4', '+2 vs prior 7d'], ['Avg Agent Wait', '11.5h', '']],
+    trend: [1, 0, 1, 1, 0, 1, 1, 1, 2, 1, 2, 2, 2, 3],
+    cases: ['61944', '61952', '61930', '60165'],
+    quotes: ['61944'],
+    why: ['Agent Wait Time (10.2 alert condition) jumps after the queue changes hands between regions.'],
+    actions: ['route', 'alert', 'brief']
+  }
+};
+
+const COHORTS = [
+  { id: 'eng', name: 'Open escalations with engineering issues', filters: ['Status: Open', 'Escalated: Yes', 'Linked engineering issue: Yes'], origin: 'Saved from Console › Summary',
+    kpi: { open: 173, esc: 72, lte: 25, slaRisk: 19, accts: 41, neg: 14 }, prior: { open: 158, esc: 61, lte: 31, slaRisk: 11, accts: 38, neg: 22 },
+    trendEsc: [58, 59, 60, 60, 61, 61, 61, 62, 63, 65, 66, 68, 70, 72], trendRisk: [10, 11, 11, 10, 11, 12, 11, 12, 13, 14, 15, 16, 18, 19],
+    insights: ['kernel', 'stall', 'sla', 'proxy'] },
+  { id: 'prem', name: 'Premium SLA tier accounts', filters: ['SLA tier: Premium', 'Status: Open'], origin: 'Uses 10.2 SLA tiers',
+    kpi: { open: 64, esc: 9, lte: 7, slaRisk: 6, accts: 12, neg: 5 }, prior: { open: 59, esc: 8, lte: 5, slaRisk: 2, accts: 12, neg: 6 },
+    trendEsc: [7, 7, 8, 8, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9], trendRisk: [2, 2, 2, 3, 2, 2, 2, 3, 3, 4, 4, 5, 5, 6],
+    insights: ['premKernel', 'premFollow'] },
+  { id: 'apac', name: 'Virtual Team · APAC Storage', filters: ['Virtual Team: APAC Storage', 'Status: Open'], origin: 'Uses Virtual Team filters',
+    kpi: { open: 48, esc: 6, lte: 5, slaRisk: 4, accts: 15, neg: 4 }, prior: { open: 46, esc: 6, lte: 4, slaRisk: 3, accts: 14, neg: 4 },
+    trendEsc: [5, 5, 6, 6, 6, 5, 6, 6, 6, 6, 6, 6, 6, 6], trendRisk: [3, 3, 3, 2, 3, 3, 3, 3, 3, 4, 3, 4, 4, 4],
+    insights: ['apac'] },
+  { id: 'renew', name: 'Accounts renewing in next 90 days', filters: ['Account renewal date: next 90 days', 'Status: Open'], origin: 'Assumes CRM renewal field is ingested',
+    kpi: { open: 37, esc: 4, lte: 3, slaRisk: 2, accts: 9, neg: 3 }, prior: { open: 38, esc: 4, lte: 3, slaRisk: 2, accts: 9, neg: 3 },
+    trendEsc: [4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4], trendRisk: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+    insights: [] }
+];
+
+/* Assumption for the upsell moment: Auto Assignment is NOT enabled in this workspace. */
+const WORKSPACE = { autoAssignment: false, automatedSlaResponse: true };
+
+const DAYS = ['Oct 11', 'Oct 12', 'Oct 13', 'Oct 14', 'Oct 15', 'Oct 16', 'Oct 17', 'Oct 18', 'Oct 19', 'Oct 20', 'Oct 21', 'Oct 22', 'Oct 23', 'Oct 24'];
+
+/* ============================ STATE ============================ */
+const state = {
+  tab: 'summary', cohort: 'eng', insight: null, dtab: 'cases', range: 7,
+  watched: new Set(['eng', 'prem', 'apac', 'renew']),
+  dismissed: new Set(), feedback: {}, selected: new Set(), openRow: null,
+  alerts: [
+    { name: 'Premium accounts — negative sentiment', type: 'Standard', status: 'Active', by: 'Usha' },
+    { name: 'Escalation keyword: "legal"', type: 'Keyword', status: 'Active', by: 'Tali' }
+  ],
+  csmRequested: false
+};
+
+/* ============================ HELPERS ============================ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const cohort = () => COHORTS.find(c => c.id === state.cohort);
+const icon = d => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${d}"/></svg>`;
+
+function toast(msg, undo) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<span>${msg}</span>` + (undo ? '<button>Undo</button>' : '');
+  if (undo) t.querySelector('button').onclick = () => { undo(); t.remove(); };
+  $('#toasts').appendChild(t);
+  setTimeout(() => t.remove(), 4200);
+}
+
+function spark(values, w, h, color, dots) {
+  const max = Math.max(...values, 1), step = w / (values.length - 1);
+  const pts = values.map((v, i) => [i * step, h - 4 - (v / max) * (h - 10)]);
+  const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+  const last = pts[pts.length - 1];
+  return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
+    <line x1="0" y1="${h - 2}" x2="${w}" y2="${h - 2}" stroke="#d6dce6"/>
+    <path d="${d}" fill="none" stroke="${color}" stroke-width="1.6" vector-effect="non-scaling-stroke"/>
+    ${dots ? `<circle cx="${last[0]}" cy="${last[1]}" r="3" fill="${color}"/>` : ''}
+  </svg>`;
+}
+
+/* ============================ NAV ============================ */
+function renderNav() {
+  $('#nav').innerHTML = NAV.map(([name, d, isNew]) =>
+    `<li><button class="${name === 'Console' ? 'active' : ''}" data-nav="${name}">${icon(d)}<span>${name}</span>${isNew ? '<span class="badge-new">NEW</span>' : ''}</button></li>`
+  ).join('');
+  $('#nav').onclick = e => {
+    const b = e.target.closest('[data-nav]');
+    if (b && b.dataset.nav !== 'Console') toast(`${b.dataset.nav} isn't part of this prototype.`);
+  };
+}
+
+/* ============================ VIEWS ============================ */
+function render() {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === state.tab));
+  const v = $('#view');
+  if (state.tab === 'overview') v.innerHTML = viewOverview();
+  if (state.tab === 'summary') v.innerHTML = viewSummary();
+  if (state.tab === 'watch') { v.innerHTML = viewWatch(); bindChart(); }
+  if (state.tab === 'team') v.innerHTML = `<div class="card empty">The Team tab isn't part of this prototype.</div>`;
+}
+
+function viewOverview() {
+  const a = [0, 1, 0, 2, 1, 3, 2, 1, 4, 2, 1, 3, 5, 2, 1, 4, 2];
+  const b = [3, 5, 2, 6, 3, 7, 4, 6, 3, 8, 4, 5, 3, 6, 4, 5, 3, 4];
+  const c = [4, 6, 3, 7, 5, 8, 4, 6, 5, 7, 3, 6];
+  const unseen = COHORTS.reduce((n, co) => n + co.insights.filter(i => !state.dismissed.has(i) && INSIGHTS[i].sev !== 'pos').length, 0);
+  return `
+  <p class="subtitle">Monitor live signals and catch what needs attention first.</p>
+  <div class="card ov-wrap">
+    <div class="ov-tools"><select class="select" aria-label="Time range (mocked)"><option>Since yesterday</option></select><button class="btn" data-mock="Filter">Filter</button></div>
+    <div class="ov-cards">
+      <div class="card ov-card"><div class="t" style="color:var(--salmon)">New Escalations</div><div style="margin:auto;color:var(--muted);font-size:13px">No Tickets</div></div>
+      <div class="card ov-card selected"><div style="display:flex;justify-content:space-between"><div class="t" style="color:var(--rose)">Likely to Escalate</div><div><div class="n">25</div><div class="u">tickets</div></div></div>${spark(a, 220, 50, '#4a5568', true)}<div class="foot">53 fewer than the previous days</div></div>
+      <div class="card ov-card"><div style="display:flex;justify-content:space-between"><div class="t" style="color:var(--rose)">Need Attention</div><div><div class="n">28</div><div class="u">signals</div></div></div>${spark(b, 220, 50, '#4a5568', true)}<div class="foot">7 critical issues</div></div>
+      <div class="card ov-card"><div class="t" style="color:var(--rose)">Negative Sentiments</div>${spark(c, 220, 50, '#4a5568', false)}<div class="foot">21 fewer than the previous days</div></div>
+    </div>
+    <div class="card ov-watch">
+      <div><span class="chip chip-proposed">PROPOSED</span> <b style="margin-left:6px">Cohort Watch:</b> ${unseen} insights need attention across ${state.watched.size} watched cohorts.</div>
+      <button class="btn btn-primary" data-go="watch">Open Cohort Watch</button>
+    </div>
+    <p class="note">This is a simplified copy of the Overview screenshot (illustrative). Only the dashed Cohort Watch row is new.</p>
+  </div>`;
+}
+
+function viewSummary() {
+  const L = n => `<a class="link" data-case="${n}">${n}</a>`;
+  const P = n => `<a class="link" data-mock="Open ${esc(n)}">${n}</a>`;
+  return `
+  <div class="card sum">
+    <div class="sum-head">
+      <span style="font-size:22px">💡</span><h2>Cohort Summary</h2>
+      <span class="outdated">⚠ Outdated</span>
+      <button class="btn-ghost btn" data-mock="Update summary">↻ Update</button>
+      <span style="margin-left:auto;display:flex;gap:6px">
+        <button class="icon-btn" data-mock="Share" title="Share (mocked)"><svg viewBox="0 0 24 24"><path d="M12 15V3M8 7l4-4 4 4M5 12v8h14v-8"/></svg></button>
+        <button class="icon-btn" data-mock="Copy" title="Copy (mocked)"><svg viewBox="0 0 24 24"><path d="M8 8h12v12H8zM4 16V4h12"/></svg></button>
+      </span>
+    </div>
+    <h4>Current Status:</h4>
+    <ul>
+      <li>There are 173 open cases with 72 escalated and all having engineering issues, indicating a high workload and technical complexity.</li>
+      <li>The longest open escalation is 31 days for case ${L('60211')} handled by ${P('Daniel Okafor')}, requiring immediate attention.</li>
+      <li>Average case age is 16 days with 35 cases marked as high priority, suggesting a need for timely resolution.</li>
+    </ul>
+    <h4>High Impact Issues:</h4>
+    <ul>
+      <li>Critical issues persist in ${L('60267')} and ${L('60515')} involving installer crashes and registration failures, handled by ${P('Grace Liu')} and ${P('Sam Patel')} respectively, requiring urgent engineering focus.</li>
+      <li>Kernel panics on Dell PE2650 servers with RAID firmware 2.8-0 are reported in <a class="link" data-go-insight="kernel">9</a> cases, with agents ${P('Priya Raman')}, ${P('Marcus Webb')}, and ${P('Elena Sokolova')} involved, indicating a significant hardware compatibility problem.</li>
+    </ul>
+    <h4>Signals and Risk Indicators:</h4>
+    <ul>
+      <li>Urgency is noted in ${L('61455')} and ${L('61852')}, highlighting performance and installation delays affecting production environments.</li>
+      <li>Escalation requests in ${L('60768')} and ${L('61214')} indicate impatience and criticality of issues requiring immediate engineering intervention.</li>
+    </ul>
+    <div class="watch-callout">
+      <div><span class="chip chip-proposed">PROPOSED</span> <b style="margin-left:6px">Want to know what changes in this cohort?</b> <span style="color:var(--ink-2)">Watch it, and we'll flag new patterns with evidence and next steps.</span></div>
+      <button class="btn btn-primary" id="watchBtn">${state.watched.has('eng') ? 'Watching · Open Cohort Watch' : 'Watch this cohort'}</button>
+    </div>
+    <p class="note">The summary text follows the structure of the Sfdc-Sandbox screenshot. The names and case details are illustrative replacements, and two sections are shortened.</p>
+  </div>`;
+}
+
+function delta(cur, pri, goodWhenDown) {
+  const d = cur - pri;
+  if (d === 0) return `<div class="d flat">No change vs prior ${state.range}d</div>`;
+  const bad = goodWhenDown ? d > 0 : d < 0;
+  return `<div class="d ${bad ? 'up-bad' : 'down-good'}">${d > 0 ? '▲' : '▼'} ${Math.abs(d)} vs prior ${state.range}d</div>`;
+}
+
+function scaledPrior(co) {
+  /* Illustrative: longer comparison windows soften the change. */
+  const f = { 7: 1, 14: 0.5, 30: 0.25 }[state.range];
+  const p = {};
+  for (const k in co.kpi) p[k] = Math.round(co.kpi[k] - (co.kpi[k] - co.prior[k]) * f);
+  return p;
+}
+
+function viewWatch() {
+  const co = cohort();
+  const pr = scaledPrior(co);
+  const live = co.insights.filter(i => !state.dismissed.has(i));
+  const K = (l, k, down = true) => `<div class="kpi"><div class="l">${l}</div><div class="v">${co.kpi[k]}</div>${delta(co.kpi[k], pr[k], down)}</div>`;
+  return `
+  <p class="subtitle">Saved cohorts are checked on a schedule. Each insight says what changed, shows the evidence, and offers a next step.</p>
+  <div class="cw">
+    <div class="card cw-list" aria-label="Watched cohorts">
+      <h3>Watched cohorts</h3>
+      ${COHORTS.filter(c => state.watched.has(c.id)).map(c => {
+        const n = c.insights.filter(i => !state.dismissed.has(i) && INSIGHTS[i].sev !== 'pos').length;
+        return `<button class="cw-item ${c.id === state.cohort ? 'active' : ''}" data-cohort="${c.id}">
+          <div class="nm">${esc(c.name)}</div>
+          <div class="meta"><span class="dot ${n ? '' : 'quiet'}"></span>${n ? n + ' need attention' : 'No new insights'} · ${c.kpi.open} open</div>
+        </button>`;
+      }).join('')}
+      <button class="btn cw-add" data-mock="Create cohort from filters">+ Watch a new cohort</button>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="cw-head">
+          <div class="cw-title">
+            <h2>${esc(co.name)}</h2>
+            <span class="chip chip-grey">${esc(co.origin)}</span>
+            <div class="cw-tools">
+              <select class="select" id="range" aria-label="Comparison window">
+                ${[7, 14, 30].map(r => `<option value="${r}" ${r === state.range ? 'selected' : ''}>Compare: last ${r} days</option>`).join('')}
+              </select>
+              <button class="btn" id="unwatch">Stop watching</button>
+            </div>
+          </div>
+          <div class="filters">${co.filters.map(f => `<span class="chip">${esc(f)}</span>`).join('')}</div>
+          <div class="status-line"><span class="pulse"></span> Watching · last checked 38 min ago · checks every 6h <span class="chip chip-proposed">ASSUMED CADENCE</span>
+            <span>· Also available to AI assistants via SupportLogic MCP <span class="chip chip-proposed">PROPOSED</span></span></div>
+        </div>
+        <div class="kpis">
+          ${K('Open cases', 'open')}${K('Escalated', 'esc')}${K('Likely to Escalate', 'lte')}${K('SLA at risk', 'slaRisk')}${K('Accounts', 'accts')}${K('Negative sentiment', 'neg')}
+        </div>
+      </div>
+
+      <div class="card trend-card">
+        <div class="section-title" style="margin:0 0 6px">
+          <h3>Cohort trend · last 14 days</h3>
+          <div class="legend"><span><i style="background:var(--teal)"></i>Escalated</span><span><i style="background:var(--rose)"></i>SLA at risk</span></div>
+        </div>
+        <div id="chart"></div>
+      </div>
+
+      <div class="section-title">
+        <h3>Insights · ${live.length}</h3>
+        <span style="font-size:12px;color:var(--muted)">Ranked by impact (SLA risk × accounts × signal strength, proposed)</span>
+      </div>
+      <div class="ins-list">
+        ${live.length ? live.map(insightCard).join('') : `<div class="card empty">No new patterns this period. We'll keep watching.</div>`}
+      </div>
+      <div class="card alerts-mini" style="padding:12px 16px;margin-top:16px">
+        <div class="section-title" style="margin:0 0 6px"><h3 style="font-size:14px">Orchestrate › Alerts Library (mock view)</h3><span style="font-size:12px;color:var(--muted)">Shows alerts created from insights</span></div>
+        <table><thead><tr><th>Name</th><th>Type</th><th>Status</th><th>Created by</th></tr></thead>
+        <tbody>${state.alerts.map(a => `<tr><td>${esc(a.name)}</td><td>${a.type}</td><td>${a.status === 'Draft' ? '<span class="chip chip-orange">Draft</span>' : '<span class="chip chip-green">Active</span>'}</td><td>${esc(a.by)}</td></tr>`).join('')}</tbody></table>
+      </div>
+    </div>
+  </div>`;
+}
+
+function insightCard(id) {
+  const i = INSIGHTS[id];
+  const sevCls = { high: 'sev-high', med: 'sev-med', pos: 'sev-pos' }[i.sev];
+  const color = i.sev === 'pos' ? '#2f8f5b' : '#e23d6d';
+  return `<button class="card ins ${state.insight === id ? 'active' : ''}" data-insight="${id}" aria-label="Open insight: ${esc(i.title)}">
+    <div>
+      <div class="kind"><span class="chip ${sevCls}">${i.kind}</span><span style="font-size:12px;color:var(--muted)">${i.firstSeen}</span>${state.feedback[id] ? `<span class="chip chip-grey">Feedback: ${state.feedback[id] === 'up' ? 'useful' : 'not useful'}</span>` : ''}</div>
+      <h4>${esc(i.title)}</h4>
+      <p>${esc(i.summary)}</p>
+      <div class="mets">${i.mets.map(m => `<span><b>${m[1]}</b> ${m[0]}${m[2] ? ` <span style="color:var(--muted)">(${m[2]})</span>` : ''}</span>`).join('')}</div>
+    </div>
+    <div class="spark">${spark(i.trend, 190, 54, color, true)}<div class="cap"><span>Oct 11</span><span>matching cases / day</span><span>Oct 24</span></div></div>
+  </button>`;
+}
+
+/* ============================ CHART ============================ */
+function bindChart() {
+  const co = cohort(), el = $('#chart');
+  if (!el) return;
+  const W = 900, H = 150, padL = 34, padB = 22, padT = 8;
+  const all = [...co.trendEsc, ...co.trendRisk];
+  const max = Math.ceil(Math.max(...all) / 10) * 10 || 10;
+  const x = i => padL + i * ((W - padL - 10) / (DAYS.length - 1));
+  const y = v => padT + (H - padT - padB) * (1 - v / max);
+  const line = (vals, c) => `<path d="${vals.map((v, i) => (i ? 'L' : 'M') + x(i) + ' ' + y(v)).join(' ')}" fill="none" stroke="${c}" stroke-width="2"/>` +
+    vals.map((v, i) => `<circle cx="${x(i)}" cy="${y(v)}" r="3" fill="${c}"/>`).join('');
+  const ticks = [0, max / 2, max];
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Escalated and SLA-at-risk cases per day">
+    ${ticks.map(t => `<line x1="${padL}" x2="${W - 10}" y1="${y(t)}" y2="${y(t)}" stroke="#eef1f5"/><text x="${padL - 6}" y="${y(t) + 4}" text-anchor="end" font-size="11" fill="#7a8599">${t}</text>`).join('')}
+    ${DAYS.map((d, i) => i % 2 === 0 ? `<text x="${x(i)}" y="${H - 6}" text-anchor="middle" font-size="11" fill="#7a8599">${d}</text>` : '').join('')}
+    ${line(co.trendEsc, '#1e4b5a')}${line(co.trendRisk, '#e23d6d')}
+    ${DAYS.map((d, i) => `<rect x="${x(i) - 14}" y="0" width="28" height="${H - padB}" fill="transparent" data-tip="${d}: ${co.trendEsc[i]} escalated · ${co.trendRisk[i]} SLA at risk"/>`).join('')}
+  </svg>`;
+  const tip = $('#tip');
+  el.onmousemove = e => {
+    const t = e.target.dataset && e.target.dataset.tip;
+    if (!t) { tip.style.display = 'none'; return; }
+    tip.textContent = t; tip.style.display = 'block';
+    tip.style.left = (e.clientX + 12) + 'px'; tip.style.top = (e.clientY - 30) + 'px';
+  };
+  el.onmouseleave = () => { tip.style.display = 'none'; };
+}
+
+/* ============================ DRAWER ============================ */
+const ACTIONS = {
+  alert: { t: 'Create an alert for this pattern', d: 'Opens a pre-filled Standard or Keyword alert in Orchestrate', i: 'M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0' },
+  proactive: { t: 'Send proactive customer updates', d: 'Automated SLA Response: drafts go to each case owner to review', i: 'M4 6h16v12H4zM4 7l8 6 8-6' },
+  route: { t: 'Route to a specialist queue', d: 'Auto Assignment moves the matching cases to the right queue', i: 'M4 7h10M10 3l4 4-4 4M20 17H10M14 13l-4 4 4 4', locked: () => !WORKSPACE.autoAssignment },
+  brief: { t: 'Share a cohort brief', d: 'An evidence-linked summary for engineering or leadership', i: 'M12 15V3M8 7l4-4 4 4M5 12v8h14v-8' }
+};
+
+function openInsight(id) {
+  state.insight = id; state.dtab = 'cases'; state.selected = new Set(INSIGHTS[id].cases); state.openRow = null;
+  renderDrawer();
+  $('#drawer').classList.add('open'); $('#drawer').setAttribute('aria-hidden', 'false');
+  $('#scrim').style.display = 'block';
+  document.querySelectorAll('.ins').forEach(b => b.classList.toggle('active', b.dataset.insight === id));
+}
+function closeDrawer() {
+  $('#drawer').classList.remove('open'); $('#drawer').setAttribute('aria-hidden', 'true');
+  $('#scrim').style.display = 'none'; state.insight = null;
+  document.querySelectorAll('.ins').forEach(b => b.classList.remove('active'));
+}
+
+function renderDrawer() {
+  const id = state.insight, i = INSIGHTS[id];
+  if (!i) return;
+  const sevCls = { high: 'sev-high', med: 'sev-med', pos: 'sev-pos' }[i.sev];
+  let body = '';
+  if (state.dtab === 'cases') {
+    body = `<div class="selbar"><span>${state.selected.size} of ${i.cases.length} cases selected for next steps</span>
+      <span><button class="btn-ghost btn" id="selAll">Select all</button><button class="btn-ghost btn" id="selNone">Clear</button></span></div>
+      <table class="cases"><thead><tr><th></th><th>Case</th><th>Account</th><th>SLA tier</th><th>SLA status</th><th>LTE</th><th>Signals</th><th>Owner</th></tr></thead><tbody>
+      ${i.cases.map(cid => {
+        const c = CASES[cid];
+        return `<tr class="case-row" data-row="${cid}">
+          <td><input type="checkbox" data-sel="${cid}" ${state.selected.has(cid) ? 'checked' : ''} aria-label="Select case ${cid}"></td>
+          <td><a class="link" data-case="${cid}">${cid}</a><div style="font-size:11.5px;color:var(--muted)">${c.pri} · ${c.age}</div></td>
+          <td>${esc(c.acct)}</td>
+          <td>${c.tier === 'Premium' ? '<span class="chip chip-orange">Premium</span>' : '<span class="chip">Default</span>'}</td>
+          <td class="${c.slaBad ? 'sla-bad' : ''}">${esc(c.sla)}</td>
+          <td><span class="ring ${c.lte >= 80 ? 'hi' : ''}">${c.lte}</span></td>
+          <td>${c.sig.length ? c.sig.map(s => `<span class="chip chip-red" style="margin:1px">${s}</span>`).join('') : '<span style="color:var(--muted)">—</span>'}</td>
+          <td>${esc(c.owner)}</td></tr>
+          ${state.openRow === cid ? `<tr class="detail"><td></td><td colspan="7"><b>Last response:</b> ${esc(c.last)}<br>${esc(c.snip)}</td></tr>` : ''}`;
+      }).join('')}
+      </tbody></table>
+      <p class="note">Click a row to see its last response. LTE = Likely to Escalate score. SLA status uses each account's tier and business hours (10.2). Illustrative data.</p>`;
+  } else if (state.dtab === 'quotes') {
+    body = i.quotes.map(cid => {
+      const c = CASES[cid];
+      return `<div class="quote"><div class="q">${esc(c.snip)}</div><div class="src"><a class="link" data-case="${cid}">Case ${cid}</a> · ${esc(c.acct)} · ${esc(c.last)} ${c.sig.map(s => `<span class="chip chip-red">${s}</span>`).join('')}</div></div>`;
+    }).join('') + `<p class="note">Quotes are excerpts from inbound customer comments. Signal labels come from existing signal detection. Illustrative data.</p>`;
+  } else {
+    body = `<ul class="why">${i.why.map(w => `<li>${esc(w)}</li>`).join('')}</ul>
+      <div class="note"><b>How this would work (proposal):</b> each scheduled check reruns the cohort summary for the current and previous window, groups the cases into clusters, and ranks what changed by SLA risk, accounts affected and signal strength. Thumbs up/down feed the signal-uptraining loop.</div>`;
+  }
+  const acts = i.actions.map(a => {
+    const A = ACTIONS[a], locked = A.locked && A.locked();
+    return `<button class="action ${locked ? 'locked' : ''}" data-action="${a}">${icon(A.i)}<span><div class="at">${A.t}</div><div class="ad">${A.d}</div>${locked ? '<div class="avail">◆ Available with Auto Assignment · preview it</div>' : ''}</span></button>`;
+  }).join('');
+  $('#drawer').innerHTML = `
+    <div class="drawer-head">
+      <div class="row"><div style="flex:1"><div class="kind" style="display:flex;gap:6px;align-items:center"><span class="chip ${sevCls}">${i.kind}</span><span style="font-size:12px;color:var(--muted)">${i.firstSeen} · ${esc(cohort().name)}</span></div>
+      <h3>${esc(i.title)}</h3></div><button class="icon-btn" id="closeDrawer" aria-label="Close">${icon('M6 6l12 12M18 6L6 18')}</button></div>
+      <div style="color:var(--ink-2);font-size:13.5px">${esc(i.summary)}</div>
+      <div class="dtabs" role="tablist">
+        <button class="dtab ${state.dtab === 'cases' ? 'active' : ''}" data-dtab="cases">Cases (${i.cases.length})</button>
+        <button class="dtab ${state.dtab === 'quotes' ? 'active' : ''}" data-dtab="quotes">Customer quotes (${i.quotes.length})</button>
+        <button class="dtab ${state.dtab === 'why' ? 'active' : ''}" data-dtab="why">Why we flagged this</button>
+      </div>
+    </div>
+    <div class="drawer-body">${body}</div>
+    <div class="drawer-foot">
+      <h5><span>Next steps</span><span style="text-transform:none;letter-spacing:0">Applies to ${state.selected.size} selected cases</span></h5>
+      <div class="actions">${acts}</div>
+      <div class="fb">Was this insight useful?
+        <button class="${state.feedback[id] === 'up' ? 'on' : ''}" data-fb="up">👍 Yes</button>
+        <button class="${state.feedback[id] === 'down' ? 'on' : ''}" data-fb="down">👎 No</button>
+        <button data-dismiss="1" style="margin-left:auto">Dismiss insight</button>
+      </div>
+    </div>`;
+}
+
+/* ============================ MODALS ============================ */
+function modal(html) { $('#modalBox').innerHTML = html; $('#modal').classList.add('open'); const f = $('#modalBox').querySelector('input,textarea,button'); if (f) f.focus(); }
+function closeModal() { $('#modal').classList.remove('open'); }
+
+function selCases() { return [...state.selected]; }
+
+function actionAlert() {
+  const id = state.insight, i = INSIGHTS[id];
+  const isKw = id === 'kernel' || id === 'premKernel';
+  const name = isKw ? 'PE2650 kernel panic · RAID 2.8-0' : id === 'stall' ? 'Engineering handoff stall · escalated cohort' : `${i.kind}: ${cohort().name}`;
+  const conds = isKw
+    ? [['Keyword in inbound comment', 'contains any', '"kernel panic", "PE2650", "RAID 2.8-0"'], ['Linked engineering issue', 'equals', 'Yes']]
+    : id === 'stall'
+      ? [['Case Age', 'greater than', '5 days'], ['Outbound Comment Count', 'less than', '1'], ['Escalated', 'equals', 'Yes']]
+      : [['SLA type', 'equals', 'Any'], ['SLA remaining', 'less than', '25%'], ['Case owner', 'in', 'cohort owners']];
+  modal(`<header><h3>Create alert from insight</h3><button class="icon-btn" data-close aria-label="Close">${icon('M6 6l12 12M18 6L6 18')}</button></header>
+    <div class="mb">
+      <div class="field"><label>Alert name</label><input id="alertName" value="${esc(name)}"></div>
+      <div class="field"><label>Alert type</label><select id="alertType"><option ${isKw ? 'selected' : ''}>Keyword</option><option ${!isKw ? 'selected' : ''}>Standard</option></select></div>
+      <div class="field"><label>Conditions (pre-filled from the insight)</label>
+        ${conds.map((c, n) => `${n ? '<div class="and">AND</div>' : ''}<div class="cond"><div>${esc(c[0])}</div><div>${esc(c[1])}</div><div>${esc(c[2])}</div></div>`).join('')}
+      </div>
+      <div class="field"><label>Scope</label><input value="Cohort: ${esc(cohort().name)}"></div>
+      <div class="field"><label>Recipients</label><input value="Support managers, Usha"></div>
+      <p class="note">${isKw ? 'Keyword alerts' : 'Standard alerts and the Case Age and Outbound Comment Count conditions'} shipped in 10.2. Pre-filling them from an insight is the proposal. Saving here adds the alert as a Draft to the mock Alerts Library below the insights; it doesn't reach a real system.</p>
+    </div>
+    <footer><button class="btn" data-close>Cancel</button><button class="btn btn-primary" id="saveAlert">Save as draft</button></footer>`);
+  $('#saveAlert').onclick = () => {
+    const nm = $('#alertName').value.trim() || name;
+    state.alerts.unshift({ name: nm, type: $('#alertType').value, status: 'Draft', by: 'Usha (from Cohort Watch)' });
+    closeModal(); render(); if (state.insight) { document.querySelectorAll('.ins').forEach(b => b.classList.toggle('active', b.dataset.insight === state.insight)); }
+    toast(`Alert “${esc(nm)}” saved as Draft in the Alerts Library (mock).`, () => { state.alerts.shift(); render(); });
+  };
+}
+
+function actionProactive() {
+  const ids = selCases().filter(c => CASES[c].slaBad);
+  const owners = {};
+  ids.forEach(c => { (owners[CASES[c].owner] = owners[CASES[c].owner] || []).push(c); });
+  const first = ids[0] && CASES[ids[0]];
+  modal(`<header><h3>Send proactive customer updates</h3><button class="icon-btn" data-close aria-label="Close">${icon('M6 6l12 12M18 6L6 18')}</button></header>
+    <div class="mb">
+      ${ids.length ? `<p style="margin-top:0">${ids.length} of the selected cases are at risk of, or have missed, an SLA. Each owner gets a <b>draft case note</b> to review, edit and send. Nothing goes to customers automatically.</p>
+      <table class="cases"><thead><tr><th>Case owner</th><th>Draft notes</th><th>Cases</th></tr></thead><tbody>
+      ${Object.entries(owners).map(([o, cs]) => `<tr><td>${esc(o)}</td><td>${cs.length}</td><td>${cs.join(', ')}</td></tr>`).join('')}</tbody></table>
+      <div class="field" style="margin-top:12px"><label>Sample draft · case ${ids[0]} · <span class="chip chip-proposed">AI-GENERATED</span></label>
+      <textarea>Hi ${esc(first.acct)} team,
+
+A quick update on case ${ids[0]}: we've linked your report to a pattern we're seeing on PowerEdge 2650 hosts after the RAID controller firmware 2.8-0 update. Engineering is actively investigating, and we'll share a recommended workaround as soon as it's validated.
+
+You don't need to do anything right now. We'll update you again within your SLA window.
+
+— ${esc(first.owner)}, Support</textarea></div>`
+      : '<p>None of the selected cases are at SLA risk, so no drafts are needed.</p>'}
+      <p class="note">Automated SLA Response with "draft case note to the case owner" delivery mode shipped in 10.2. Starting it from a cohort insight for many cases at once is the proposal.</p>
+    </div>
+    <footer><button class="btn" data-close>Cancel</button>${ids.length ? `<button class="btn btn-primary" id="mkDrafts">Create ${ids.length} drafts for owners</button>` : ''}</footer>`);
+  const b = $('#mkDrafts');
+  if (b) b.onclick = () => { closeModal(); toast(`${ids.length} draft case notes queued for ${Object.keys(owners).length} owners (mock). Owners get an email to review them.`); };
+}
+
+function actionRoute() {
+  const ids = selCases();
+  const hw = ids.filter((c, n) => n % 3 !== 2).length, kd = ids.length - hw;
+  const max = Math.max(hw, kd, 1);
+  modal(`<header><h3>Route ${ids.length} cases to a specialist queue</h3><button class="icon-btn" data-close aria-label="Close">${icon('M6 6l12 12M18 6L6 18')}</button></header>
+    <div class="mb">
+      <div class="upsell-box"><b>Auto Assignment isn't enabled in this workspace.</b><br>Here's what it would have done with these cases, using example queue rules. Nothing below is applied.</div>
+      <div class="preview-bars">
+        <div class="bar"><span>Hardware · Storage queue</span><div class="track"><div class="fill" style="width:${hw / max * 100}%"></div></div><b>${hw}</b></div>
+        <div class="bar"><span>Kernel &amp; Drivers queue</span><div class="track"><div class="fill" style="width:${kd / max * 100}%"></div></div><b>${kd}</b></div>
+      </div>
+      <ul class="why" style="font-size:13px">
+        <li>Cases would be assigned by queue priority and agent availability, with skip reasons logged on the Performance page.</li>
+        <li>Engineers who have breached their SLA would get fewer new assignments while they catch up.</li>
+      </ul>
+      <p class="note">Auto Assignment and its Performance page exist in the Assignment module (10.2). Assumption: it's enabled per workspace as a packaged add-on (packaging not confirmed). The queue names and split are illustrative.</p>
+    </div>
+    <footer><button class="btn" data-close>Not now</button>${state.csmRequested ? '<button class="btn" disabled>CSM already notified ✓</button>' : '<button class="btn btn-primary" id="askCsm">Ask my CSM about Auto Assignment</button>'}</footer>`);
+  const b = $('#askCsm');
+  if (b) b.onclick = () => { state.csmRequested = true; closeModal(); toast('Request sent to your CSM with this preview attached (mock).'); };
+}
+
+function actionBrief() {
+  const i = INSIGHTS[state.insight], ids = selCases();
+  const txt = `${i.title}
+Cohort: ${cohort().name} · ${i.firstSeen} · Comparison window: last ${state.range} days
+
+What changed
+${i.summary}
+
+Evidence (${ids.length} cases)
+${ids.map(c => `- ${c} · ${CASES[c].acct} · ${CASES[c].tier} tier · ${CASES[c].sla} · owner ${CASES[c].owner}`).join('\n')}
+
+Why it was flagged
+${i.why.map(w => '- ' + w).join('\n')}
+
+Suggested next steps
+${i.actions.map(a => '- ' + ACTIONS[a].t).join('\n')}
+
+[Illustrative prototype data]`;
+  modal(`<header><h3>Share cohort brief</h3><button class="icon-btn" data-close aria-label="Close">${icon('M6 6l12 12M18 6L6 18')}</button></header>
+    <div class="mb">
+      <div class="field"><label>Brief (editable)</label><textarea id="briefTxt">${esc(txt)}</textarea></div>
+      <div class="field"><label>Send to</label><input value="#eng-escalations (Slack), Tali"></div>
+      <label style="display:flex;gap:8px;align-items:center;font-size:13px"><input type="checkbox" id="weekly"> Send this cohort's brief every Monday <span class="chip chip-proposed">PROPOSED</span></label>
+    </div>
+    <footer><button class="btn" id="copyBrief">Copy text</button><button class="btn btn-primary" id="sendBrief">Share</button></footer>`);
+  $('#copyBrief').onclick = async () => {
+    const v = $('#briefTxt').value;
+    try { await navigator.clipboard.writeText(v); toast('Brief copied to clipboard.'); }
+    catch (e) { $('#briefTxt').select(); document.execCommand('copy'); toast('Brief copied to clipboard.'); }
+  };
+  $('#sendBrief').onclick = () => { const wk = $('#weekly').checked; closeModal(); toast(`Brief shared (mock)${wk ? ', and a weekly send is scheduled' : ''}.`); };
+}
+
+/* ============================ EVENTS ============================ */
+document.addEventListener('click', e => {
+  const t = e.target;
+  const go = t.closest('[data-go]'); if (go) { state.tab = go.dataset.go; render(); return; }
+  const tab = t.closest('.tab'); if (tab) { state.tab = tab.dataset.tab; closeDrawer(); render(); return; }
+  const mock = t.closest('[data-mock]'); if (mock) { toast(`${esc(mock.dataset.mock)} is mocked in this prototype.`); return; }
+  const cs = t.closest('[data-case]'); if (cs) { e.stopPropagation(); toast(`Case ${cs.dataset.case} would open in Workspace or the CRM (mocked).`); return; }
+  const gi = t.closest('[data-go-insight]'); if (gi) { state.tab = 'watch'; state.cohort = 'eng'; render(); openInsight(gi.dataset.goInsight); return; }
+  if (t.id === 'watchBtn') {
+    if (!state.watched.has('eng')) { state.watched.add('eng'); toast('Now watching “Open escalations with engineering issues”.'); }
+    state.tab = 'watch'; state.cohort = 'eng'; render(); return;
+  }
+  const co = t.closest('[data-cohort]'); if (co) { state.cohort = co.dataset.cohort; closeDrawer(); render(); return; }
+  if (t.id === 'unwatch') {
+    const c = cohort(), prev = state.cohort;
+    state.watched.delete(c.id);
+    const next = COHORTS.find(x => state.watched.has(x.id));
+    if (!next) { state.watched.add(c.id); toast('Keep at least one cohort watched in this prototype.'); return; }
+    state.cohort = next.id; render();
+    toast(`Stopped watching “${esc(c.name)}”.`, () => { state.watched.add(c.id); state.cohort = prev; render(); });
+    return;
+  }
+  const ins = t.closest('[data-insight]'); if (ins) { openInsight(ins.dataset.insight); return; }
+  if (t.closest('#closeDrawer') || t.id === 'scrim') { closeDrawer(); return; }
+  const dt = t.closest('[data-dtab]'); if (dt) { state.dtab = dt.dataset.dtab; renderDrawer(); return; }
+  if (t.dataset && t.dataset.sel) {
+    const id = t.dataset.sel; t.checked ? state.selected.add(id) : state.selected.delete(id); renderDrawer(); return;
+  }
+  if (t.id === 'selAll') { INSIGHTS[state.insight].cases.forEach(c => state.selected.add(c)); renderDrawer(); return; }
+  if (t.id === 'selNone') { state.selected.clear(); renderDrawer(); return; }
+  const row = t.closest('[data-row]'); if (row && t.tagName !== 'INPUT') { state.openRow = state.openRow === row.dataset.row ? null : row.dataset.row; renderDrawer(); return; }
+  const act = t.closest('[data-action]');
+  if (act) {
+    if (!state.selected.size) { toast('Select at least one case first.'); return; }
+    ({ alert: actionAlert, proactive: actionProactive, route: actionRoute, brief: actionBrief })[act.dataset.action]();
+    return;
+  }
+  const fb = t.closest('[data-fb]');
+  if (fb) { state.feedback[state.insight] = fb.dataset.fb; renderDrawer(); toast('Thanks. Feedback helps tune future insights.'); const id = state.insight; render(); openInsight(id); return; }
+  if (t.closest('[data-dismiss]')) {
+    const id = state.insight; state.dismissed.add(id); closeDrawer(); render();
+    toast('Insight dismissed.', () => { state.dismissed.delete(id); render(); });
+    return;
+  }
+  if (t.closest('[data-close]') || t.id === 'modal') { closeModal(); return; }
+});
+
+document.addEventListener('change', e => {
+  if (e.target.id === 'range') { state.range = Number(e.target.value); render(); }
+});
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if ($('#modal').classList.contains('open')) closeModal(); else if (state.insight) closeDrawer();
+});
+
+renderNav();
+render();
+</script>
+</body>
+</html>
