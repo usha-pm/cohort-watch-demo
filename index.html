@@ -262,7 +262,48 @@
   .alerts-mini table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
   .alerts-mini td, .alerts-mini th { padding: 6px; border-bottom: 1px solid var(--line); text-align: left; }
 
+  /* Weekly digest */
+  .digest { display: grid; grid-template-columns: 1.3fr repeat(5, minmax(0, 1fr)); gap: 10px; padding: 14px 16px; margin-bottom: 16px; align-items: center; }
+  .digest .lead { font-size: 13px; color: var(--ink-2); }
+  .digest .lead b { display: block; font-size: 15px; color: var(--ink); margin-bottom: 2px; }
+  .digest .stat { border-left: 1px solid var(--line); padding-left: 12px; }
+  .digest .stat .v { font-size: 22px; font-weight: 700; }
+  .digest .stat .l { font-size: 12px; color: var(--muted); }
+  .impact { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 8px; font-size: 12.5px; color: var(--ink-2); }
+  .chip-churn { color: var(--rose); border-color: #f2a7bd; background: #fff; }
+  .chip-built { background: #eef6f9; color: var(--teal); border-color: #bcdbe6; font-size: 11px; }
+  .chip-done { background: #eaf6ef; color: var(--green); border-color: #a8d8bd; }
+  .conf { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; }
+  .conf i { width: 22px; height: 6px; border-radius: 3px; background: #e5e9f0; position: relative; overflow: hidden; display: inline-block; }
+  .conf i::after { content: ""; position: absolute; inset: 0; width: var(--w); background: var(--teal-2); }
+  .action .built { margin-top: 4px; }
+  .mcp-link { margin-top: 10px; font-size: 12.5px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .timeline { list-style: none; padding: 0; margin: 0; }
+  .timeline li { padding: 8px 0 8px 18px; border-left: 2px solid var(--line); position: relative; font-size: 13px; color: var(--ink-2); }
+  .timeline li::before { content: ""; position: absolute; left: -6px; top: 12px; width: 10px; height: 10px; border-radius: 50%; background: var(--teal-2); }
+  .timeline li b { color: var(--ink); }
+  /* MCP mock chat */
+  .chat { display: grid; gap: 10px; }
+  .msg { padding: 10px 12px; border-radius: 12px; font-size: 13.5px; max-width: 92%; }
+  .msg.user { background: var(--pill); justify-self: end; }
+  .msg.bot { background: #f6f7f9; border: 1px solid var(--line); }
+  .tool { font-family: ui-monospace, Menlo, monospace; font-size: 12px; background: #1d2433; color: #cfe5ee; border-radius: 8px; padding: 8px 10px; white-space: pre-wrap; }
+  /* Tour + demo settings */
+  .tour { position: fixed; left: 20px; bottom: 20px; width: 360px; z-index: 96; background: #fff; border: 1px solid var(--line-2); border-radius: 14px; box-shadow: 0 16px 40px rgba(16,24,40,.22); padding: 14px 16px; }
+  .tour .step { font-size: 11px; font-weight: 700; letter-spacing: .6px; color: var(--violet); text-transform: uppercase; }
+  .tour h4 { margin: 4px 0 6px; font-size: 15px; }
+  .tour p { margin: 0 0 12px; font-size: 13px; color: var(--ink-2); }
+  .tour .row { display: flex; gap: 8px; justify-content: space-between; align-items: center; }
+  .tour .dots { display: flex; gap: 4px; }
+  .tour .dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--line-2); }
+  .tour .dots span.on { background: var(--violet); }
+  .demo-panel { position: fixed; left: 272px; bottom: 20px; z-index: 45; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .demo-panel .btn { box-shadow: var(--shadow); }
+  .switch { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; background: #fff; border: 1px solid var(--line-2); border-radius: 8px; padding: 6px 10px; box-shadow: var(--shadow); cursor: pointer; }
+  .switch input { accent-color: var(--teal); }
+
   @media (max-width: 1100px) {
+    .digest { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .ov-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .cw { grid-template-columns: 1fr; }
@@ -274,6 +315,9 @@
     .ins { grid-template-columns: 1fr; }
     .actions { grid-template-columns: 1fr; }
     .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .digest { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .tour { width: calc(100vw - 40px); }
+    .demo-panel { left: 16px; }
   }
 </style>
 </head>
@@ -320,6 +364,11 @@
 <div class="toasts" id="toasts" aria-live="polite"></div>
 <div class="tooltip" id="tip"></div>
 <button class="help" data-mock="Help">? Help</button>
+<div class="demo-panel" id="demoPanel">
+  <button class="btn btn-primary" id="tourStart">▶ Take the 60-second tour</button>
+  <label class="switch" title="Demo control: simulate a customer that already owns Auto Assignment"><input type="checkbox" id="pkgToggle"> Demo: workspace has Auto Assignment</label>
+</div>
+<div class="tour" id="tour" hidden></div>
 
 <script>
 /* =========================================================================
@@ -372,6 +421,20 @@ const CASES = {
   '60890': { acct: 'Saltmarsh Telecom', tier: 'Default', pri: 'Medium', age: '8d', sla: 'Within SLA', slaBad: false, lte: 41, sig: [], owner: 'Tomás Herrera', last: 'Outbound · 4h ago', snip: '"The proxy charset fix resolved it on our side, thanks."' },
   '60934': { acct: 'Tamarind Retail', tier: 'Default', pri: 'Low', age: '9d', sla: 'Within SLA', slaBad: false, lte: 35, sig: [], owner: 'Grace Liu', last: 'Outbound · 1d ago', snip: '"Confirmed working after the patch."' },
   '61002': { acct: 'Bluefin Media', tier: 'Default', pri: 'Medium', age: '7d', sla: 'Within SLA', slaBad: false, lte: 44, sig: [], owner: 'Noah Fischer', last: 'Outbound · 2d ago', snip: '"Encoding issue no longer reproduces."' }
+};
+
+/* Accounts carrying the existing "Churn risk" badge (seen on Console › Overview case cards). Illustrative. */
+const CHURN = new Set(['Helios Grid Energy', 'Saltmarsh Telecom', 'Bluefin Media', 'Quarry Bank Financial']);
+
+/* How confident detection is, and why (proposal: shown so leaders can judge the insight). */
+const CONF = {
+  kernel: ['High', 90, 'All 9 cases share the same three terms and crash signature, and growth held for 7 straight days.'],
+  stall: ['High', 85, 'Based on comment timestamps and engineering links. No language interpretation is involved.'],
+  sla: ['Medium', 60, 'The breach counts are exact. Whether workload causes them is inferred from open escalations per engineer.'],
+  proxy: ['High', 80, 'The sentiment drop follows outbound "patch confirmed" replies on the same cases.'],
+  premKernel: ['High', 88, 'Same signature as the engineering-escalations pattern, limited to Premium SLA tier accounts.'],
+  premFollow: ['Medium', 55, 'Only 2 breaches so far. The pattern may be noise; watch one more week.'],
+  apac: ['Medium', 60, 'Agent Wait Time jumps at the regional handoff, but only 4 cases so far.']
 };
 
 const INSIGHTS = {
@@ -505,8 +568,25 @@ const state = {
     { name: 'Premium accounts — negative sentiment', type: 'Standard', status: 'Active', by: 'Usha' },
     { name: 'Escalation keyword: "legal"', type: 'Keyword', status: 'Active', by: 'Tali' }
   ],
-  csmRequested: false
+  csmRequested: false,
+  log: [],            /* actions taken from insights: { insight, text } */
+  previews: 0,        /* upsell previews opened */
+  tour: null          /* current tour step index, or null */
 };
+
+function logAction(text) {
+  const now = new Date();
+  state.log.unshift({ insight: state.insight, text, time: now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) });
+}
+function insightImpact(id) {
+  const accts = [...new Set(INSIGHTS[id].cases.map(c => CASES[c].acct))];
+  return {
+    accts: accts.length,
+    premium: accts.filter(a => INSIGHTS[id].cases.some(c => CASES[c].acct === a && CASES[c].tier === 'Premium')).length,
+    churn: accts.filter(a => CHURN.has(a)).length,
+    names: accts
+  };
+}
 
 /* ============================ HELPERS ============================ */
 const $ = s => document.querySelector(s);
@@ -638,7 +718,8 @@ function viewWatch() {
   const live = co.insights.filter(i => !state.dismissed.has(i));
   const K = (l, k, down = true) => `<div class="kpi"><div class="l">${l}</div><div class="v">${co.kpi[k]}</div>${delta(co.kpi[k], pr[k], down)}</div>`;
   return `
-  <p class="subtitle">Saved cohorts are checked on a schedule. Each insight says what changed, shows the evidence, and offers a next step.</p>
+  <p class="subtitle">Saved cohorts are re-checked after every data sync. Each insight says what changed, shows the evidence, and offers a next step.</p>
+  ${digest()}
   <div class="cw">
     <div class="card cw-list" aria-label="Watched cohorts">
       <h3>Watched cohorts</h3>
@@ -666,8 +747,7 @@ function viewWatch() {
             </div>
           </div>
           <div class="filters">${co.filters.map(f => `<span class="chip">${esc(f)}</span>`).join('')}</div>
-          <div class="status-line"><span class="pulse"></span> Watching · last checked 38 min ago · checks every 6h <span class="chip chip-proposed">ASSUMED CADENCE</span>
-            <span>· Also available to AI assistants via SupportLogic MCP <span class="chip chip-proposed">PROPOSED</span></span></div>
+          <div class="status-line"><span class="pulse"></span> Watching · insights based on data synced Oct 25, 2:08 AM (14 h ago) · refreshed after each sync <span class="chip chip-proposed">PROPOSED</span></div>
         </div>
         <div class="kpis">
           ${K('Open cases', 'open')}${K('Escalated', 'esc')}${K('Likely to Escalate', 'lte')}${K('SLA at risk', 'slaRisk')}${K('Accounts', 'accts')}${K('Negative sentiment', 'neg')}
@@ -698,6 +778,39 @@ function viewWatch() {
   </div>`;
 }
 
+function confBadge(id) {
+  const c = CONF[id];
+  return c ? `<span class="conf" title="${esc(c[2])}"><i style="--w:${c[1]}%"></i>${c[0]} confidence</span>` : '';
+}
+
+function impactLine(id) {
+  const m = insightImpact(id), done = state.log.filter(l => l.insight === id).length;
+  return `<div class="impact">
+    <span>Exposure: <b>${m.accts}</b> account${m.accts === 1 ? '' : 's'}</span>
+    ${m.premium ? `<span class="chip chip-orange">${m.premium} Premium tier</span>` : ''}
+    ${m.churn ? `<span class="chip chip-churn">${m.churn} with Churn risk</span>` : ''}
+    <span style="color:var(--line-2)">|</span>${confBadge(id)}
+    ${done ? `<span class="chip chip-done">✓ ${done} action${done === 1 ? '' : 's'} taken</span>` : ''}
+  </div>`;
+}
+
+function digest() {
+  const ids = [...new Set(COHORTS.filter(c => state.watched.has(c.id)).flatMap(c => c.insights))].filter(i => !state.dismissed.has(i));
+  const risky = ids.filter(i => INSIGHTS[i].sev !== 'pos');
+  const accts = [...new Set(risky.flatMap(i => INSIGHTS[i].cases.map(c => CASES[c].acct)))];
+  const prem = accts.filter(a => Object.values(CASES).some(c => c.acct === a && c.tier === 'Premium')).length;
+  const churn = accts.filter(a => CHURN.has(a)).length;
+  const S = (v, l) => `<div class="stat"><div class="v">${v}</div><div class="l">${l}</div></div>`;
+  return `<div class="card digest" aria-label="This week across watched cohorts">
+    <div class="lead"><b>This week across ${state.watched.size} watched cohorts</b>What needs a leader's attention, and what's been done about it.</div>
+    ${S(risky.filter(i => INSIGHTS[i].sev === 'high').length, 'high-priority insights')}
+    ${S(accts.length, 'accounts exposed')}
+    ${S(`${prem} <span style="font-size:13px;font-weight:500;color:var(--muted)">/ ${churn}</span>`, 'Premium / churn-risk')}
+    ${S(state.log.length, 'actions taken')}
+    ${S(state.previews, 'upsell previews')}
+  </div>`;
+}
+
 function insightCard(id) {
   const i = INSIGHTS[id];
   const sevCls = { high: 'sev-high', med: 'sev-med', pos: 'sev-pos' }[i.sev];
@@ -708,6 +821,7 @@ function insightCard(id) {
       <h4>${esc(i.title)}</h4>
       <p>${esc(i.summary)}</p>
       <div class="mets">${i.mets.map(m => `<span><b>${m[1]}</b> ${m[0]}${m[2] ? ` <span style="color:var(--muted)">(${m[2]})</span>` : ''}</span>`).join('')}</div>
+      ${impactLine(id)}
     </div>
     <div class="spark">${spark(i.trend, 190, 54, color, true)}<div class="cap"><span>Oct 11</span><span>matching cases / day</span><span>Oct 24</span></div></div>
   </button>`;
@@ -743,10 +857,10 @@ function bindChart() {
 
 /* ============================ DRAWER ============================ */
 const ACTIONS = {
-  alert: { t: 'Create an alert for this pattern', d: 'Opens a pre-filled Standard or Keyword alert in Orchestrate', i: 'M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0' },
-  proactive: { t: 'Send proactive customer updates', d: 'Automated SLA Response: drafts go to each case owner to review', i: 'M4 6h16v12H4zM4 7l8 6 8-6' },
-  route: { t: 'Route to a specialist queue', d: 'Auto Assignment moves the matching cases to the right queue', i: 'M4 7h10M10 3l4 4-4 4M20 17H10M14 13l-4 4 4 4', locked: () => !WORKSPACE.autoAssignment },
-  brief: { t: 'Share a cohort brief', d: 'An evidence-linked summary for engineering or leadership', i: 'M12 15V3M8 7l4-4 4 4M5 12v8h14v-8' }
+  alert: { t: 'Create an alert for this pattern', d: 'Opens a pre-filled Standard or Keyword alert in Orchestrate', i: 'M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0', built: 'Alerts Library · shipped in 10.2' },
+  proactive: { t: 'Send proactive customer updates', d: 'Drafts go to each case owner to review before sending', i: 'M4 6h16v12H4zM4 7l8 6 8-6', built: 'Automated SLA Response · shipped in 10.2' },
+  route: { t: 'Route to a specialist queue', d: 'Auto Assignment moves the matching cases to the right queue', i: 'M4 7h10M10 3l4 4-4 4M20 17H10M14 13l-4 4 4 4', built: 'Auto Assignment · Assignment module', locked: () => !WORKSPACE.autoAssignment },
+  brief: { t: 'Share a cohort brief', d: 'An evidence-linked summary for engineering or leadership', i: 'M12 15V3M8 7l4-4 4 4M5 12v8h14v-8', built: 'Scheduled delivery · proposed' }
 };
 
 function openInsight(id) {
@@ -754,18 +868,24 @@ function openInsight(id) {
   renderDrawer();
   $('#drawer').classList.add('open'); $('#drawer').setAttribute('aria-hidden', 'false');
   $('#scrim').style.display = 'block';
-  document.querySelectorAll('.ins').forEach(b => b.classList.toggle('active', b.dataset.insight === id));
+  markActive();
 }
 function closeDrawer() {
   $('#drawer').classList.remove('open'); $('#drawer').setAttribute('aria-hidden', 'true');
   $('#scrim').style.display = 'none'; state.insight = null;
-  document.querySelectorAll('.ins').forEach(b => b.classList.remove('active'));
+  markActive();
 }
+function markActive() {
+  document.querySelectorAll('.ins').forEach(b => b.classList.toggle('active', b.dataset.insight === state.insight));
+}
+/* Re-render the page behind the drawer without losing the drawer's tab or case selection. */
+function refresh() { render(); if (state.insight) { renderDrawer(); markActive(); } }
 
 function renderDrawer() {
   const id = state.insight, i = INSIGHTS[id];
   if (!i) return;
   const sevCls = { high: 'sev-high', med: 'sev-med', pos: 'sev-pos' }[i.sev];
+  const mine = state.log.filter(l => l.insight === id);
   let body = '';
   if (state.dtab === 'cases') {
     body = `<div class="selbar"><span>${state.selected.size} of ${i.cases.length} cases selected for next steps</span>
@@ -776,7 +896,7 @@ function renderDrawer() {
         return `<tr class="case-row" data-row="${cid}">
           <td><input type="checkbox" data-sel="${cid}" ${state.selected.has(cid) ? 'checked' : ''} aria-label="Select case ${cid}"></td>
           <td><a class="link" data-case="${cid}">${cid}</a><div style="font-size:11.5px;color:var(--muted)">${c.pri} · ${c.age}</div></td>
-          <td>${esc(c.acct)}</td>
+          <td>${esc(c.acct)}${CHURN.has(c.acct) ? '<div><span class="chip chip-churn" style="margin-top:3px">Churn risk</span></div>' : ''}</td>
           <td>${c.tier === 'Premium' ? '<span class="chip chip-orange">Premium</span>' : '<span class="chip">Default</span>'}</td>
           <td class="${c.slaBad ? 'sla-bad' : ''}">${esc(c.sla)}</td>
           <td><span class="ring ${c.lte >= 80 ? 'hi' : ''}">${c.lte}</span></td>
@@ -785,35 +905,43 @@ function renderDrawer() {
           ${state.openRow === cid ? `<tr class="detail"><td></td><td colspan="7"><b>Last response:</b> ${esc(c.last)}<br>${esc(c.snip)}</td></tr>` : ''}`;
       }).join('')}
       </tbody></table>
-      <p class="note">Click a row to see its last response. LTE = Likely to Escalate score. SLA status uses each account's tier and business hours (10.2). Illustrative data.</p>`;
+      <p class="note">Click a row to see its last response. LTE = Likely to Escalate score. SLA tier and status use each account's tier and business hours (shipped in 10.2). Churn risk is the existing account badge. Illustrative data.</p>`;
   } else if (state.dtab === 'quotes') {
     body = i.quotes.map(cid => {
       const c = CASES[cid];
       return `<div class="quote"><div class="q">${esc(c.snip)}</div><div class="src"><a class="link" data-case="${cid}">Case ${cid}</a> · ${esc(c.acct)} · ${esc(c.last)} ${c.sig.map(s => `<span class="chip chip-red">${s}</span>`).join('')}</div></div>`;
     }).join('') + `<p class="note">Quotes are excerpts from inbound customer comments. Signal labels come from existing signal detection. Illustrative data.</p>`;
+  } else if (state.dtab === 'why') {
+    const c = CONF[id];
+    body = (c ? `<div class="upsell-box" style="background:#eef6f9"><b>${c[0]} confidence</b> ${confBadge(id)}<br>${esc(c[2])}</div>` : '') +
+      `<ul class="why">${i.why.map(w => `<li>${esc(w)}</li>`).join('')}</ul>
+      <div class="note"><b>How this would work (proposal):</b> after each data sync, the cohort summary is rerun for the current and previous window. Cases are grouped into clusters, and changes are ranked by SLA risk, accounts exposed and signal strength. Thumbs up/down feed the signal-uptraining loop.</div>`;
   } else {
-    body = `<ul class="why">${i.why.map(w => `<li>${esc(w)}</li>`).join('')}</ul>
-      <div class="note"><b>How this would work (proposal):</b> each scheduled check reruns the cohort summary for the current and previous window, groups the cases into clusters, and ranks what changed by SLA risk, accounts affected and signal strength. Thumbs up/down feed the signal-uptraining loop.</div>`;
+    body = `${mine.length ? `<ul class="timeline">${mine.map(l => `<li><b>${esc(l.text)}</b><br><span style="font-size:12px;color:var(--muted)">Usha · today ${l.time}</span></li>`).join('')}</ul>` : '<p style="color:var(--muted)">No actions taken on this insight yet. Next steps you take are logged here.</p>'}
+      <div class="note"><b>Outcome tracking (proposal):</b> after an action, Cohort Watch keeps measuring this pattern (matching cases, SLA at risk, escalations) so leaders can see whether the action worked. That before/after is the ROI story for the customer and for renewal conversations.</div>`;
   }
   const acts = i.actions.map(a => {
     const A = ACTIONS[a], locked = A.locked && A.locked();
-    return `<button class="action ${locked ? 'locked' : ''}" data-action="${a}">${icon(A.i)}<span><div class="at">${A.t}</div><div class="ad">${A.d}</div>${locked ? '<div class="avail">◆ Available with Auto Assignment · preview it</div>' : ''}</span></button>`;
+    return `<button class="action ${locked ? 'locked' : ''}" data-action="${a}">${icon(A.i)}<span><div class="at">${A.t}</div><div class="ad">${A.d}</div>${locked ? '<div class="avail">◆ Available with Auto Assignment · preview it</div>' : `<div class="built"><span class="chip chip-built">${A.built}</span></div>`}</span></button>`;
   }).join('');
   $('#drawer').innerHTML = `
     <div class="drawer-head">
-      <div class="row"><div style="flex:1"><div class="kind" style="display:flex;gap:6px;align-items:center"><span class="chip ${sevCls}">${i.kind}</span><span style="font-size:12px;color:var(--muted)">${i.firstSeen} · ${esc(cohort().name)}</span></div>
+      <div class="row"><div style="flex:1"><div class="kind" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span class="chip ${sevCls}">${i.kind}</span><span style="font-size:12px;color:var(--muted)">${i.firstSeen} · ${esc(cohort().name)}</span></div>
       <h3>${esc(i.title)}</h3></div><button class="icon-btn" id="closeDrawer" aria-label="Close">${icon('M6 6l12 12M18 6L6 18')}</button></div>
       <div style="color:var(--ink-2);font-size:13.5px">${esc(i.summary)}</div>
+      ${impactLine(id)}
       <div class="dtabs" role="tablist">
         <button class="dtab ${state.dtab === 'cases' ? 'active' : ''}" data-dtab="cases">Cases (${i.cases.length})</button>
         <button class="dtab ${state.dtab === 'quotes' ? 'active' : ''}" data-dtab="quotes">Customer quotes (${i.quotes.length})</button>
         <button class="dtab ${state.dtab === 'why' ? 'active' : ''}" data-dtab="why">Why we flagged this</button>
+        <button class="dtab ${state.dtab === 'activity' ? 'active' : ''}" data-dtab="activity">Activity (${mine.length})</button>
       </div>
     </div>
     <div class="drawer-body">${body}</div>
     <div class="drawer-foot">
       <h5><span>Next steps</span><span style="text-transform:none;letter-spacing:0">Applies to ${state.selected.size} selected cases</span></h5>
       <div class="actions">${acts}</div>
+      <div class="mcp-link"><button class="btn" id="mcpBtn">✦ Ask about this in your AI assistant</button><span class="chip chip-built">SupportLogic MCP · beta since 10.2</span><span class="chip chip-proposed">PROPOSED TOOL</span></div>
       <div class="fb">Was this insight useful?
         <button class="${state.feedback[id] === 'up' ? 'on' : ''}" data-fb="up">👍 Yes</button>
         <button class="${state.feedback[id] === 'down' ? 'on' : ''}" data-fb="down">👎 No</button>
@@ -825,6 +953,7 @@ function renderDrawer() {
 /* ============================ MODALS ============================ */
 function modal(html) { $('#modalBox').innerHTML = html; $('#modal').classList.add('open'); const f = $('#modalBox').querySelector('input,textarea,button'); if (f) f.focus(); }
 function closeModal() { $('#modal').classList.remove('open'); }
+const closeX = () => `<button class="icon-btn" data-close aria-label="Close">${icon('M6 6l12 12M18 6L6 18')}</button>`;
 
 function selCases() { return [...state.selected]; }
 
@@ -837,7 +966,7 @@ function actionAlert() {
     : id === 'stall'
       ? [['Case Age', 'greater than', '5 days'], ['Outbound Comment Count', 'less than', '1'], ['Escalated', 'equals', 'Yes']]
       : [['SLA type', 'equals', 'Any'], ['SLA remaining', 'less than', '25%'], ['Case owner', 'in', 'cohort owners']];
-  modal(`<header><h3>Create alert from insight</h3><button class="icon-btn" data-close aria-label="Close">${icon('M6 6l12 12M18 6L6 18')}</button></header>
+  modal(`<header><h3>Create alert from insight</h3>${closeX()}</header>
     <div class="mb">
       <div class="field"><label>Alert name</label><input id="alertName" value="${esc(name)}"></div>
       <div class="field"><label>Alert type</label><select id="alertType"><option ${isKw ? 'selected' : ''}>Keyword</option><option ${!isKw ? 'selected' : ''}>Standard</option></select></div>
@@ -846,14 +975,15 @@ function actionAlert() {
       </div>
       <div class="field"><label>Scope</label><input value="Cohort: ${esc(cohort().name)}"></div>
       <div class="field"><label>Recipients</label><input value="Support managers, Usha"></div>
-      <p class="note">${isKw ? 'Keyword alerts' : 'Standard alerts and the Case Age and Outbound Comment Count conditions'} shipped in 10.2. Pre-filling them from an insight is the proposal. Saving here adds the alert as a Draft to the mock Alerts Library below the insights; it doesn't reach a real system.</p>
+      <p class="note">${isKw ? 'Keyword alerts' : 'Standard alerts and the Case Age and Outbound Comment Count conditions'} shipped in 10.2. Pre-filling them from an insight is the proposal. Saving adds a Draft to the mock Alerts Library below the insights; nothing reaches a real system.</p>
     </div>
     <footer><button class="btn" data-close>Cancel</button><button class="btn btn-primary" id="saveAlert">Save as draft</button></footer>`);
   $('#saveAlert').onclick = () => {
     const nm = $('#alertName').value.trim() || name;
     state.alerts.unshift({ name: nm, type: $('#alertType').value, status: 'Draft', by: 'Usha (from Cohort Watch)' });
-    closeModal(); render(); if (state.insight) { document.querySelectorAll('.ins').forEach(b => b.classList.toggle('active', b.dataset.insight === state.insight)); }
-    toast(`Alert “${esc(nm)}” saved as Draft in the Alerts Library (mock).`, () => { state.alerts.shift(); render(); });
+    logAction(`Created alert “${nm}” (Draft)`);
+    closeModal(); refresh();
+    toast(`Alert “${esc(nm)}” saved as Draft in the Alerts Library (mock).`, () => { state.alerts.shift(); state.log.shift(); refresh(); });
   };
 }
 
@@ -862,7 +992,7 @@ function actionProactive() {
   const owners = {};
   ids.forEach(c => { (owners[CASES[c].owner] = owners[CASES[c].owner] || []).push(c); });
   const first = ids[0] && CASES[ids[0]];
-  modal(`<header><h3>Send proactive customer updates</h3><button class="icon-btn" data-close aria-label="Close">${icon('M6 6l12 12M18 6L6 18')}</button></header>
+  modal(`<header><h3>Send proactive customer updates</h3>${closeX()}</header>
     <div class="mb">
       ${ids.length ? `<p style="margin-top:0">${ids.length} of the selected cases are at risk of, or have missed, an SLA. Each owner gets a <b>draft case note</b> to review, edit and send. Nothing goes to customers automatically.</p>
       <table class="cases"><thead><tr><th>Case owner</th><th>Draft notes</th><th>Cases</th></tr></thead><tbody>
@@ -876,42 +1006,58 @@ You don't need to do anything right now. We'll update you again within your SLA 
 
 — ${esc(first.owner)}, Support</textarea></div>`
       : '<p>None of the selected cases are at SLA risk, so no drafts are needed.</p>'}
-      <p class="note">Automated SLA Response with "draft case note to the case owner" delivery mode shipped in 10.2. Starting it from a cohort insight for many cases at once is the proposal.</p>
+      <p class="note">Automated SLA Response with "draft case note to the case owner" delivery shipped in 10.2. Starting it from a cohort insight for many cases at once is the proposal.</p>
     </div>
     <footer><button class="btn" data-close>Cancel</button>${ids.length ? `<button class="btn btn-primary" id="mkDrafts">Create ${ids.length} drafts for owners</button>` : ''}</footer>`);
   const b = $('#mkDrafts');
-  if (b) b.onclick = () => { closeModal(); toast(`${ids.length} draft case notes queued for ${Object.keys(owners).length} owners (mock). Owners get an email to review them.`); };
+  if (b) b.onclick = () => {
+    const n = Object.keys(owners).length;
+    logAction(`Queued ${ids.length} proactive update drafts for ${n} case owners`);
+    closeModal(); refresh();
+    toast(`${ids.length} draft case notes queued for ${n} owners (mock). Owners get an email to review them.`);
+  };
 }
 
 function actionRoute() {
   const ids = selCases();
   const hw = ids.filter((c, n) => n % 3 !== 2).length, kd = ids.length - hw;
   const max = Math.max(hw, kd, 1);
-  modal(`<header><h3>Route ${ids.length} cases to a specialist queue</h3><button class="icon-btn" data-close aria-label="Close">${icon('M6 6l12 12M18 6L6 18')}</button></header>
+  const owned = WORKSPACE.autoAssignment;
+  if (!owned) { state.previews++; refresh(); }
+  modal(`<header><h3>Route ${ids.length} cases to a specialist queue</h3>${closeX()}</header>
     <div class="mb">
-      <div class="upsell-box"><b>Auto Assignment isn't enabled in this workspace.</b><br>Here's what it would have done with these cases, using example queue rules. Nothing below is applied.</div>
+      ${owned
+        ? `<p style="margin-top:0">Auto Assignment will move these cases using your queue rules, then assign them by queue priority and agent availability.</p>`
+        : `<div class="upsell-box"><b>Auto Assignment isn't enabled in this workspace.</b><br>Here's what it would have done with these exact cases, using example queue rules. Nothing below is applied.</div>`}
       <div class="preview-bars">
         <div class="bar"><span>Hardware · Storage queue</span><div class="track"><div class="fill" style="width:${hw / max * 100}%"></div></div><b>${hw}</b></div>
         <div class="bar"><span>Kernel &amp; Drivers queue</span><div class="track"><div class="fill" style="width:${kd / max * 100}%"></div></div><b>${kd}</b></div>
       </div>
       <ul class="why" style="font-size:13px">
-        <li>Cases would be assigned by queue priority and agent availability, with skip reasons logged on the Performance page.</li>
-        <li>Engineers who have breached their SLA would get fewer new assignments while they catch up.</li>
+        <li>Skip reasons and assignment health show on the Auto Assignment Overview page (shipped in 10.2).</li>
+        <li>Engineers who have breached their SLA get fewer new assignments while they catch up.</li>
       </ul>
-      <p class="note">Auto Assignment and its Performance page exist in the Assignment module (10.2). Assumption: it's enabled per workspace as a packaged add-on (packaging not confirmed). The queue names and split are illustrative.</p>
+      <p class="note">Assumption: Auto Assignment is enabled per workspace as a packaged add-on (packaging not confirmed). Queue names and the split are illustrative. Use the demo switch at the bottom left to see the ${owned ? 'upsell' : 'owned'} version.</p>
     </div>
-    <footer><button class="btn" data-close>Not now</button>${state.csmRequested ? '<button class="btn" disabled>CSM already notified ✓</button>' : '<button class="btn btn-primary" id="askCsm">Ask my CSM about Auto Assignment</button>'}</footer>`);
+    <footer><button class="btn" data-close>${owned ? 'Cancel' : 'Not now'}</button>${owned
+      ? `<button class="btn btn-primary" id="routeNow">Route ${ids.length} cases</button>`
+      : state.csmRequested ? '<button class="btn" disabled>CSM already notified ✓</button>' : '<button class="btn btn-primary" id="askCsm">Ask my CSM about Auto Assignment</button>'}</footer>`);
+  const r = $('#routeNow');
+  if (r) r.onclick = () => { logAction(`Routed ${ids.length} cases to specialist queues`); closeModal(); refresh(); toast(`${ids.length} cases routed (mock).`); };
   const b = $('#askCsm');
-  if (b) b.onclick = () => { state.csmRequested = true; closeModal(); toast('Request sent to your CSM with this preview attached (mock).'); };
+  if (b) b.onclick = () => { state.csmRequested = true; logAction('Asked CSM about Auto Assignment (preview attached)'); closeModal(); refresh(); toast('Request sent to your CSM with this preview attached (mock).'); };
 }
 
 function actionBrief() {
-  const i = INSIGHTS[state.insight], ids = selCases();
+  const i = INSIGHTS[state.insight], ids = selCases(), m = insightImpact(state.insight);
   const txt = `${i.title}
 Cohort: ${cohort().name} · ${i.firstSeen} · Comparison window: last ${state.range} days
 
 What changed
 ${i.summary}
+
+Exposure
+${m.accts} accounts (${m.premium} Premium tier, ${m.churn} with churn risk) · ${CONF[state.insight] ? CONF[state.insight][0] + ' confidence' : ''}
 
 Evidence (${ids.length} cases)
 ${ids.map(c => `- ${c} · ${CASES[c].acct} · ${CASES[c].tier} tier · ${CASES[c].sla} · owner ${CASES[c].owner}`).join('\n')}
@@ -923,7 +1069,7 @@ Suggested next steps
 ${i.actions.map(a => '- ' + ACTIONS[a].t).join('\n')}
 
 [Illustrative prototype data]`;
-  modal(`<header><h3>Share cohort brief</h3><button class="icon-btn" data-close aria-label="Close">${icon('M6 6l12 12M18 6L6 18')}</button></header>
+  modal(`<header><h3>Share cohort brief</h3>${closeX()}</header>
     <div class="mb">
       <div class="field"><label>Brief (editable)</label><textarea id="briefTxt">${esc(txt)}</textarea></div>
       <div class="field"><label>Send to</label><input value="#eng-escalations (Slack), Tali"></div>
@@ -935,12 +1081,77 @@ ${i.actions.map(a => '- ' + ACTIONS[a].t).join('\n')}
     try { await navigator.clipboard.writeText(v); toast('Brief copied to clipboard.'); }
     catch (e) { $('#briefTxt').select(); document.execCommand('copy'); toast('Brief copied to clipboard.'); }
   };
-  $('#sendBrief').onclick = () => { const wk = $('#weekly').checked; closeModal(); toast(`Brief shared (mock)${wk ? ', and a weekly send is scheduled' : ''}.`); };
+  $('#sendBrief').onclick = () => {
+    const wk = $('#weekly').checked;
+    logAction(`Shared cohort brief${wk ? ' and scheduled it weekly' : ''}`);
+    closeModal(); refresh();
+    toast(`Brief shared (mock)${wk ? ', and a weekly send is scheduled' : ''}.`);
+  };
 }
+
+function actionMcp() {
+  const id = state.insight, i = INSIGHTS[id], m = insightImpact(id), c = CONF[id];
+  modal(`<header><h3>Cohort Watch in an AI assistant</h3>${closeX()}</header>
+    <div class="mb">
+      <div class="chat">
+        <div class="msg user">What changed in our engineering escalations this week, and what should we do first?</div>
+        <div class="tool">→ supportlogic.get_cohort_insights(
+    cohort: "${esc(cohort().name)}",
+    window: "${state.range}d")
+← ${cohort().insights.filter(x => !state.dismissed.has(x)).length} insights · respects your data access scope</div>
+        <div class="msg bot"><b>Top change:</b> ${esc(i.title)}.<br>${esc(i.summary)}<br><br>
+          <b>Exposure:</b> ${m.accts} accounts, ${m.premium} on the Premium SLA tier and ${m.churn} flagged for churn risk${c ? ` (${c[0].toLowerCase()} confidence)` : ''}.<br>
+          <b>Evidence:</b> cases ${i.cases.slice(0, 3).join(', ')} and ${Math.max(i.cases.length - 3, 0)} more.<br><br>
+          <b>Suggested first step:</b> ${esc(ACTIONS[i.actions[0]].t.toLowerCase())}. Want me to draft it for your review?</div>
+      </div>
+      <p class="note">SupportLogic MCP tools shipped in beta in 10.2, and their answers respect each user's data access. The <code>get_cohort_insights</code> tool and this exchange are a proposal. Any write action would still need human approval.</p>
+    </div>
+    <footer><button class="btn btn-primary" data-close>Close</button></footer>`);
+}
+
+/* ============================ TOUR ============================ */
+function closeAll() { closeModal(); if (state.insight) closeDrawer(); }
+function ensureInsight(id) {
+  if (state.tab !== 'watch' || state.cohort !== 'eng') { state.tab = 'watch'; state.cohort = 'eng'; render(); }
+  if (state.insight !== id) openInsight(id);
+}
+const TOUR = [
+  { t: 'Today: a one-time summary', p: 'This is the Cohort Summary we ship today. It describes a pile of cases once, goes stale (“Outdated”) and doesn’t say what changed.',
+    go: () => { closeAll(); state.tab = 'summary'; render(); } },
+  { t: 'Cohort Watch keeps watching', p: 'Saved cohorts are re-checked after every data sync. The digest at the top shows this week’s exposure across all of them: Premium and churn-risk accounts, actions taken, upsell previews.',
+    go: () => { closeAll(); state.tab = 'watch'; state.cohort = 'eng'; render(); $('#scroll').scrollTop = 0; } },
+  { t: 'Every insight shows its evidence', p: 'Behind “kernel panics are spreading” are 9 real cases, with SLA tier and status (shipped in 10.2), Likely to Escalate scores, signals and churn-risk flags.',
+    go: () => { closeModal(); ensureInsight('kernel'); state.dtab = 'cases'; renderDrawer(); } },
+  { t: '…and how sure we are', p: '“Why we flagged this” explains the detection and gives a confidence level, so a leader can trust the insight or push back on it.',
+    go: () => { closeModal(); ensureInsight('kernel'); state.dtab = 'why'; renderDrawer(); } },
+  { t: 'Act with what we shipped in 10.2', p: 'Each next step opens a Core SX feature, pre-filled. Here, Automated SLA Response drafts an update for every at-risk case, and each owner reviews it before it goes out.',
+    go: () => { closeModal(); ensureInsight('kernel'); state.dtab = 'cases'; renderDrawer(); actionProactive(); } },
+  { t: 'The upsell moment', p: 'This workspace doesn’t own Auto Assignment, so the customer sees what it would have done with these exact cases and can ask their CSM. The demo switch shows the owned version.',
+    go: () => { closeModal(); WORKSPACE.autoAssignment = false; $('#pkgToggle').checked = false; ensureInsight('kernel'); renderDrawer(); actionRoute(); } },
+  { t: 'Same insight, in any AI assistant', p: 'Through SupportLogic MCP (beta since 10.2), assistants like Claude can ask what changed and get the same evidence-backed answer within the user’s access scope.',
+    go: () => { closeModal(); ensureInsight('kernel'); actionMcp(); } },
+  { t: 'What changed, why, and what to do', p: 'Every action is logged on the insight, so we can show whether it worked. That’s the ROI story. Explore freely from here.',
+    go: () => { closeModal(); ensureInsight('kernel'); state.dtab = 'activity'; renderDrawer(); } }
+];
+function renderTour() {
+  const el = $('#tour'), on = state.tour !== null;
+  el.hidden = !on; $('#demoPanel').style.display = on ? 'none' : 'flex';
+  if (!on) return;
+  const s = TOUR[state.tour], last = state.tour === TOUR.length - 1;
+  el.innerHTML = `<div class="step">Tour · step ${state.tour + 1} of ${TOUR.length}</div><h4>${s.t}</h4><p>${s.p}</p>
+    <div class="row"><div class="dots">${TOUR.map((_, n) => `<span class="${n === state.tour ? 'on' : ''}"></span>`).join('')}</div>
+    <span><button class="btn-ghost btn" id="tourExit">Exit</button>${state.tour ? '<button class="btn" id="tourBack">Back</button>' : ''} <button class="btn btn-primary" id="tourNext">${last ? 'Finish' : 'Next'}</button></span></div>`;
+}
+function tourGo(n) { state.tour = n; TOUR[n].go(); renderTour(); }
 
 /* ============================ EVENTS ============================ */
 document.addEventListener('click', e => {
   const t = e.target;
+  if (t.closest('#tourStart')) { tourGo(0); return; }
+  if (t.closest('#tourNext')) { if (state.tour === TOUR.length - 1) { state.tour = null; renderTour(); } else tourGo(state.tour + 1); return; }
+  if (t.closest('#tourBack')) { tourGo(state.tour - 1); return; }
+  if (t.closest('#tourExit')) { state.tour = null; renderTour(); return; }
+  if (t.closest('#mcpBtn')) { actionMcp(); return; }
   const go = t.closest('[data-go]'); if (go) { state.tab = go.dataset.go; render(); return; }
   const tab = t.closest('.tab'); if (tab) { state.tab = tab.dataset.tab; closeDrawer(); render(); return; }
   const mock = t.closest('[data-mock]'); if (mock) { toast(`${esc(mock.dataset.mock)} is mocked in this prototype.`); return; }
@@ -976,7 +1187,7 @@ document.addEventListener('click', e => {
     return;
   }
   const fb = t.closest('[data-fb]');
-  if (fb) { state.feedback[state.insight] = fb.dataset.fb; renderDrawer(); toast('Thanks. Feedback helps tune future insights.'); const id = state.insight; render(); openInsight(id); return; }
+  if (fb) { state.feedback[state.insight] = fb.dataset.fb; refresh(); toast('Thanks. Feedback helps tune future insights.'); return; }
   if (t.closest('[data-dismiss]')) {
     const id = state.insight; state.dismissed.add(id); closeDrawer(); render();
     toast('Insight dismissed.', () => { state.dismissed.delete(id); render(); });
@@ -986,15 +1197,23 @@ document.addEventListener('click', e => {
 });
 
 document.addEventListener('change', e => {
-  if (e.target.id === 'range') { state.range = Number(e.target.value); render(); }
+  if (e.target.id === 'range') { state.range = Number(e.target.value); refresh(); }
+  if (e.target.id === 'pkgToggle') {
+    WORKSPACE.autoAssignment = e.target.checked;
+    if (state.insight) renderDrawer();
+    toast(`Demo: this workspace ${e.target.checked ? 'now owns' : 'no longer owns'} Auto Assignment.`);
+  }
 });
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
-  if ($('#modal').classList.contains('open')) closeModal(); else if (state.insight) closeDrawer();
+  if ($('#modal').classList.contains('open')) closeModal();
+  else if (state.insight) closeDrawer();
+  else if (state.tour !== null) { state.tour = null; renderTour(); }
 });
 
 renderNav();
 render();
+renderTour();
 </script>
 </body>
 </html>

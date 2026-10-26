@@ -11,7 +11,9 @@ A clickable concept prototype for **Cohort Watch**, a proposed extension of Supp
 1. Double-click `index.html`, or drag it into Chrome, Safari or Edge.
 2. That's it. It's one self-contained file with no server, no install and no network requests.
 
-**Suggested click path (about 2 minutes):**
+**Fastest way in:** click **▶ Take the 60-second tour** at the bottom of the page. It walks through the whole story in 8 steps: today's summary → what changed → evidence → confidence → acting with 10.2 features → the upsell moment → MCP → outcome tracking.
+
+**Or explore yourself (about 2 minutes):**
 1. **Summary tab** (opens first): the existing Cohort Summary. Click **Watching · Open Cohort Watch**, or click the **9** in the kernel-panic bullet.
 2. **Cohort Watch tab:** switch cohorts on the left, change the comparison window, and hover the trend chart.
 3. Click the **Kernel panics on Dell PE2650…** insight to open the evidence panel. It has three tabs: Cases (click a row to see its last response; tick or untick cases), Customer quotes, and Why we flagged this.
@@ -38,6 +40,12 @@ A clickable concept prototype for **Cohort Watch**, a proposed extension of Supp
 | Proactive updates | Groups selected SLA-risk cases by owner; shows a sample AI draft | No drafts are created or sent |
 | Route to a specialist queue (upsell) | Preview splits the selected cases across queues; "Ask my CSM" changes state | Queue names, split and CSM request are mocked. Assumes Auto Assignment isn't enabled |
 | Share a brief | Builds a brief from the insight and selected cases; editable; **Copy** really copies; weekly toggle | Sharing and scheduling are mocked |
+| Guided tour (8 steps) | Drives the real UI: switches tabs, opens the insight, evidence tabs and modals; Back/Next/Exit; Esc exits | Narration is fixed text |
+| Weekly digest | Counts high-priority insights, accounts exposed, Premium and churn-risk accounts, actions taken and upsell previews across watched cohorts; updates as you act | Underlying data is illustrative |
+| Exposure and confidence | Each insight computes its accounts, Premium-tier and churn-risk counts from its cases; shows a confidence level and reason | Churn-risk accounts and confidence values are illustrative |
+| Activity and outcome tracking | Every action is logged on its insight (Activity tab, "actions taken" chip) | Outcome measurement after an action is described, not simulated |
+| Ask in an AI assistant (MCP) | Opens a sample assistant exchange built from the selected insight | The tool `get_cohort_insights` and the exchange are a proposal |
+| Demo switch: "workspace has Auto Assignment" | Toggles the routing action between the upsell preview and the owned flow (Route now) | Routing is mocked |
 | Sidebar, search, help, share/copy icons | Show a "not in prototype" message | Mocked |
 | Keyboard | Esc closes a modal, then the panel; focus rings are visible | Not a full accessibility audit |
 
